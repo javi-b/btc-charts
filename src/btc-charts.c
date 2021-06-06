@@ -8,17 +8,17 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "myimg.h"
+#include "myimg/myimg.h"
 
 #define STR_LEN 128
 
 // Image constants
-#define IMG_PATH "chart.png"
+#define IMG_PATH "charts/chart.png"
 #define WIDTH 1024
 #define HEIGHT 576
 
 // BTC CSV constants
-#define BTC_CSV_PATH "bitcoinity_data.csv"
+#define BTC_CSV_PATH "data/bitcoinity_data.csv"
 
 struct row {
     char date[STR_LEN];
