@@ -2,6 +2,7 @@
  * TODO
  *  - add grid
  *  - add anotations (prices, date, javibonafonte.com, ...)
+ *  - stock to flow
  */
 
 #include <stdlib.h>
@@ -126,15 +127,51 @@ float apply_scale (int scale, float value) {
 /**
  *
  */
-void paint_function (int *image, float min_x, float max_x, float min_y,
+void paint_rainbow_column (int *image, int x, int j, int thickness,
+        int min_hue, int max_hue, int alpha) {
+
+    int r, g, b;
+    float hue;
+
+    for (int y = 0; y < HEIGHT; y++) {
+        if (abs (y - j) < thickness) {
+
+            hue = ((y - j + thickness + min_hue) * max_hue / thickness)
+                % 360;
+            hsl_to_rgb (&r, &g, &b, hue, 1, 0.7);
+            set_rgba (image, WIDTH, x, y, r, g, b, alpha);
+        }
+    }
+}
+
+/**
+ *
+ */
+void paint_function_column (int *image, int x, int j, int prev_j,
+        int r, int g, int b, int a) {
+
+    for (int y = 0; y < HEIGHT; y++) {
+        if ((x > 0 && ((j < prev_j && y < prev_j && y > j)
+                        || (j > prev_j && y > prev_j && y < j))) 
+                || y == j) {
+            set_rgba (image, WIDTH, x, y, r, g, b, a);
+        }
+    }
+}
+
+/**
+ *
+ */
+void paint_trololo (int *image, float min_x, float max_x, float min_y,
         float max_y, int y_scale) {
 
     min_y = apply_scale (y_scale, min_y);
     max_y = apply_scale (y_scale, max_y);
-    int x, y, day, j, prev_j;
+    int day, j, prev_j;
     float value;
 
-    for (x = 0; x < WIDTH; x++) {
+
+    for (int x = 0; x < WIDTH; x++) {
 
         day = (int) x * (max_x - min_x) / WIDTH + min_x;
 
@@ -146,13 +183,9 @@ void paint_function (int *image, float min_x, float max_x, float min_y,
 
         j = HEIGHT - (int) ((value - min_y) * HEIGHT) / (max_y - min_y);
 
-        for (y = 0; y < HEIGHT; y++) {
-            if ((x > 0 && ((j < prev_j && y < prev_j && y > j)
-                            || (j > prev_j && y > prev_j && y < j))) 
-                    || y == j) {
-                set_rgba (image, WIDTH, x, y, 255, 0, 0, 255);
-            }
-        }
+        paint_rainbow_column (image, x, j, 80, 0, 120, 255);
+        //paint_function_column (image, x, j, prev_j, 255, 0, 0, 255);
+
         prev_j = j;
     }
 }
@@ -161,29 +194,24 @@ void paint_function (int *image, float min_x, float max_x, float min_y,
  *
  */
 void paint_price_image (int *image, struct row *rows, int num_rows,
-        float min, float max, int scale) {
+        float min, float max, int y_scale) {
 
-    min = apply_scale (scale, min);
-    max = apply_scale (scale, max);
-    int x, y, j, prev_j;
+    min = apply_scale (y_scale, min);
+    max = apply_scale (y_scale, max);
+    int x, j, prev_j;
     double price;
 
     for (x = 0; x < WIDTH; x++) {
 
-        price = apply_scale (scale,
+        price = apply_scale (y_scale,
                 rows[x * (int) num_rows / WIDTH].price);
 
         if (price != -1) {
 
             j = HEIGHT - (int) ((price - min) * HEIGHT) / (max - min);
 
-            for (y = 0; y < HEIGHT; y++) {
-                if ((x > 0 && ((j < prev_j && y < prev_j && y > j)
-                                || (j > prev_j && y > prev_j && y < j)))
-                        || y == j) {
-                    set_rgba (image, WIDTH, x, y, 0, 0, 0, 255);
-                }
-            }
+            paint_function_column (image, x, j, prev_j, 0, 0, 0, 255);
+
             prev_j = j;
         }
     }
@@ -222,8 +250,8 @@ int main (int argc, char *argv[]) {
 
     //paint_price_image (image, rows, num_rows, 0, 65000, linear);
 
-    paint_function (image, 554, num_rows + 554, 0.1, 100000, logarithmic);
-    paint_price_image (image, rows, num_rows, 0.1, 100000, logarithmic);
+    paint_trololo (image, 554, num_rows + 554, 0.1, 1000000, logarithmic);
+    paint_price_image (image, rows, num_rows, 0.1, 1000000, logarithmic);
 
     // Writes 'image' buffer to file
     return write_image (image, IMG_PATH, WIDTH, HEIGHT);
