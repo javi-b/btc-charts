@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <png.h>
-//#include <MagickWand/MagickWand.h>
 
 #include "myimg.h"
 

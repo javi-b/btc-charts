@@ -1,7 +1,6 @@
 /**
  * TODO
- *  - add grid
- *  - add anotations (prices, date, javibonafonte.com, ...)
+ *  - add anotations (prices, date, javibonafonte.com, ...) (freetype lib?)
  *  - stock to flow
  */
 
@@ -125,6 +124,23 @@ float apply_scale (int scale, float value) {
 }
 
 /**
+ * Paints logarithmic scale y axis lines on 'image' from 'min' to 'max'.
+ * Each line marks '10 * previous line'.
+ */
+void paint_log_axis (int *image, float min, float max) {
+
+    float log_min = log (min);
+    float log_max = log (max);
+    int x, j;
+
+    for (float y = min; y <= max; y *= 10) {
+        j = HEIGHT - (log (y) - log_min) * HEIGHT / (log_max - log_min);
+        for (x = 0; x < WIDTH; x++)
+            set_rgba (image, WIDTH, x, j, 204, 204, 204, 255);
+    }
+}
+
+/**
  *
  */
 void paint_rainbow_column (int *image, int x, int j, int thickness,
@@ -193,8 +209,8 @@ void paint_trololo (int *image, float min_x, float max_x, float min_y,
 /**
  *
  */
-void paint_price_image (int *image, struct row *rows, int num_rows,
-        float min, float max, int y_scale) {
+void paint_price (int *image, struct row *rows, int num_rows, float min,
+        float max, int y_scale) {
 
     min = apply_scale (y_scale, min);
     max = apply_scale (y_scale, max);
@@ -222,6 +238,8 @@ void paint_price_image (int *image, struct row *rows, int num_rows,
  */
 int main (int argc, char *argv[]) {
 
+    int code = 0;
+
     // Opens BTC csv file for reading
     FILE *fp = fopen (BTC_CSV_PATH, "r");
     if (fp == NULL) {
@@ -248,12 +266,21 @@ int main (int argc, char *argv[]) {
     // Paints data to 'image' buffer
     paint_image_background (image, WIDTH, HEIGHT, 0, 0, 0, 0);
 
-    //paint_price_image (image, rows, num_rows, 0, 65000, linear);
+    //paint_price (image, rows, num_rows, 0, 65000, linear);
 
     paint_trololo (image, 554, num_rows + 554, 0.1, 1000000, logarithmic);
-    paint_price_image (image, rows, num_rows, 0.1, 1000000, logarithmic);
+
+    paint_log_axis (image, 0.1, 1000000);
+
+    paint_price (image, rows, num_rows, 0.1, 1000000, logarithmic);
 
     // Writes 'image' buffer to file
-    return write_image (image, IMG_PATH, WIDTH, HEIGHT);
+    code = write_image (image, IMG_PATH, WIDTH, HEIGHT);
+
+    // Frees 'image' buffer
+    if (image != NULL)
+        free (image);
+
+    return code;
 }
 
