@@ -255,6 +255,7 @@ int generate_image (struct row *rows, int num_rows) {
     }
 
     // Paints data to 'image' buffer
+
     paint_image_background (image, WIDTH, HEIGHT, 0, 0, 0, 0);
 
     //paint_price (image, rows, num_rows, 0, 65000, linear);
@@ -283,8 +284,8 @@ int process_image () {
     int code = 0;
 
     // Paints watermark
-    code = paint_watermark (IMG_PATH, WIDTH, HEIGHT,
-            "javibonafonte.com", "rgb(204, 204, 204)");
+    code = paint_watermark (IMG_PATH, WIDTH, HEIGHT, top_left,
+            "javibonafonte.com", "rgb(0, 0, 0)");
 
     return code;
 }

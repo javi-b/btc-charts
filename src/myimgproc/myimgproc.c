@@ -83,16 +83,39 @@ finalise:
 }
 
 /**
- * Annotates one line of 'text' of 'color' on the bottom right side of the
+ * Annotates one line of 'text' of 'color' on the selected 'corner' of the
  * image on 'img_path' of size 'width'x'height'.
  */
-int paint_watermark (char *img_path, int width, int height, char *text,
-        char *color) {
+int paint_watermark (char *img_path, int width, int height, int corner,
+        char *text, char *color) {
 
     const int pad = 2;
     int len = strlen (text);
-    int x = width - len * FONT_WIDTH - pad;
-    int y = height - pad;
+    int x, y;
+
+    switch (corner) {
+
+        case top_left:
+        default:
+            x = pad;
+            y = FONT_SIZE + pad;
+            break;
+
+        case top_right:
+            x = width - len * FONT_WIDTH - pad;
+            y = FONT_SIZE + pad;
+            break;
+
+        case bottom_right:
+            x = width - len * FONT_WIDTH - pad;
+            y = height - pad;
+            break;
+
+        case bottom_left:
+            x = pad;
+            y = height - pad;
+            break;
+    }
 
     return annotate_img (img_path, x, y, 0, text, color);
 }
