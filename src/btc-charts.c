@@ -1,6 +1,10 @@
 /**
+ * Generator of multiple Bitcoin charts PNG images using C + libpng.
+ *
+ * Javi Bonafonte
+ *
  * TODO
- *  - add anotations (prices, date, javibonafonte.com, ...) (freetype lib?)
+ *  - add anotations (prices, date, javibonafonte.com, ...)
  *  - stock to flow
  */
 
@@ -9,6 +13,7 @@
 #include <math.h>
 
 #include "myimg/myimg.h"
+#include "myimgproc/myimgproc.h"
 
 #define STR_LEN 128
 
@@ -270,7 +275,7 @@ int main (int argc, char *argv[]) {
 
     paint_trololo (image, 554, num_rows + 554, 0.1, 1000000, logarithmic);
 
-    paint_log_axis (image, 0.1, 1000000);
+    //paint_log_axis (image, 0.1, 1000000);
 
     paint_price (image, rows, num_rows, 0.1, 1000000, logarithmic);
 
@@ -280,6 +285,8 @@ int main (int argc, char *argv[]) {
     // Frees 'image' buffer
     if (image != NULL)
         free (image);
+
+    code = annotate_img (IMG_PATH, 100, 100, 0, "hola, what's poppin 你好");
 
     return code;
 }

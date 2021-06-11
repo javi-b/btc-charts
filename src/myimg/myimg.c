@@ -1,3 +1,9 @@
+/**
+ * My image library.
+ *
+ * Javi Bonafonte
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -102,7 +108,7 @@ int write_image (int *image, char *path, int width, int height) {
     // Opens png file for writing (binary mode)
     FILE *fp = fopen (path, "wb");
     if (fp == NULL) {
-        fprintf (stderr, "Couldn't open '%s' file\n", path);
+        fprintf (stderr, "Couldn't open file '%s'\n", path);
         code = 1;
         goto finalise;
     }
@@ -112,13 +118,13 @@ int write_image (int *image, char *path, int width, int height) {
             PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (png_ptr == NULL) {
         fprintf (stderr, "Couldn't allocate png write struct\n");
-        return 1;
+        code = 1;
+        goto finalise;
     }
 
     // Initializes info structure
     png_infop info_ptr = png_create_info_struct (png_ptr);
     if (info_ptr == NULL) {
-        png_destroy_write_struct (&png_ptr, (png_infopp) NULL);
         fprintf (stderr, "Couldn't allocate png info struct\n");
         code = 1;
         goto finalise;
