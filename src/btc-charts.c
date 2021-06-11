@@ -4,7 +4,7 @@
  * Javi Bonafonte
  *
  * TODO
- *  - add anotations (prices, date, javibonafonte.com, ...)
+ *  - add anotations (prices, dates, ...)
  *  - stock to flow
  */
 
@@ -239,27 +239,13 @@ void paint_price (int *image, struct row *rows, int num_rows, float min,
 }
 
 /**
- * Main.
+ * Generates desired chart image using 'libpng' (functions in 'myimg.h').
+ *
+ * Uses some data for the generation passed as arguments.
  */
-int main (int argc, char *argv[]) {
+int generate_image (struct row *rows, int num_rows) {
 
     int code = 0;
-
-    // Opens BTC csv file for reading
-    FILE *fp = fopen (BTC_CSV_PATH, "r");
-    if (fp == NULL) {
-        fprintf (stderr, "Couldn't open '%s' file\n", BTC_CSV_PATH);
-        return 1;
-    }
-
-    // Gets data from BTC csv file
-    int num_rows = get_num_lines (fp) - 1;
-    struct row rows[num_rows];
-    get_rows (rows, fp);
-
-    fclose (fp);
-
-    //float max_price = get_max_price (rows, num_rows);
 
     // Creates 'image' buffer
     int *image = create_image (WIDTH, HEIGHT);
@@ -286,7 +272,56 @@ int main (int argc, char *argv[]) {
     if (image != NULL)
         free (image);
 
-    code = annotate_img (IMG_PATH, 100, 100, 0, "hola, what's poppin 你好");
+    return code;
+}
+
+/**
+ * Processes image using 'MagickWand' lib (fucntions in 'myimgproc.h').
+ */
+int process_image () {
+
+    int code = 0;
+
+    // Paints watermark
+    code = paint_watermark (IMG_PATH, WIDTH, HEIGHT,
+            "javibonafonte.com", "rgb(204, 204, 204)");
+
+    return code;
+}
+
+/**
+ * Main.
+ *
+ *      1. Gets the neede data from the CSV file.
+ *      2. Generates image using that data.
+ *      3. Processes generated image using that data.
+ */
+int main (int argc, char *argv[]) {
+
+    int code = 0;
+
+    // Opens BTC csv file for reading
+    FILE *fp = fopen (BTC_CSV_PATH, "r");
+    if (fp == NULL) {
+        fprintf (stderr, "Couldn't open '%s' file\n", BTC_CSV_PATH);
+        return 1;
+    }
+
+    // Gets data from BTC CSV file
+    int num_rows = get_num_lines (fp) - 1;
+    struct row rows[num_rows];
+    get_rows (rows, fp);
+
+    fclose (fp);
+
+    //float max_price = get_max_price (rows, num_rows);
+
+    // Generates image
+    code = generate_image (rows, num_rows);
+
+    // Processes image
+    if (code == 0)
+        code = process_image ();
 
     return code;
 }
