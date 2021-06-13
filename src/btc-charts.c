@@ -4,6 +4,7 @@
  * Javi Bonafonte
  *
  * TODO
+ *  - use only MagickWand ?
  *  - add anotations (prices, dates, ...)
  *  - stock to flow
  */
@@ -11,6 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <MagickWand/MagickWand.h>
 
 #include "myimg/myimg.h"
 #include "myimgproc/myimgproc.h"
@@ -129,26 +131,9 @@ float apply_scale (int scale, float value) {
 }
 
 /**
- * Paints logarithmic scale y axis lines on 'image' from 'min' to 'max'.
- * Each line marks '10 * previous line'.
- */
-void paint_log_axis (int *image, float min, float max) {
-
-    float log_min = log (min);
-    float log_max = log (max);
-    int x, j;
-
-    for (float y = min; y <= max; y *= 10) {
-        j = HEIGHT - (log (y) - log_min) * HEIGHT / (log_max - log_min);
-        for (x = 0; x < WIDTH; x++)
-            set_rgba (image, WIDTH, x, j, 204, 204, 204, 255);
-    }
-}
-
-/**
  *
  */
-void paint_rainbow_column (int *image, int x, int j, int thickness,
+void paint_rainbow_column (int *img, int x, int j, int thickness,
         int min_hue, int max_hue, int alpha) {
 
     int r, g, b;
@@ -160,7 +145,7 @@ void paint_rainbow_column (int *image, int x, int j, int thickness,
             hue = ((y - j + thickness + min_hue) * max_hue / thickness)
                 % 360;
             hsl_to_rgb (&r, &g, &b, hue, 1, 0.7);
-            set_rgba (image, WIDTH, x, y, r, g, b, alpha);
+            set_rgba (img, WIDTH, x, y, r, g, b, alpha);
         }
     }
 }
@@ -168,14 +153,14 @@ void paint_rainbow_column (int *image, int x, int j, int thickness,
 /**
  *
  */
-void paint_function_column (int *image, int x, int j, int prev_j,
+void paint_function_column (int *img, int x, int j, int prev_j,
         int r, int g, int b, int a) {
 
     for (int y = 0; y < HEIGHT; y++) {
         if ((x > 0 && ((j < prev_j && y < prev_j && y > j)
                         || (j > prev_j && y > prev_j && y < j))) 
                 || y == j) {
-            set_rgba (image, WIDTH, x, y, r, g, b, a);
+            set_rgba (img, WIDTH, x, y, r, g, b, a);
         }
     }
 }
@@ -183,7 +168,7 @@ void paint_function_column (int *image, int x, int j, int prev_j,
 /**
  *
  */
-void paint_trololo (int *image, float min_x, float max_x, float min_y,
+void paint_trololo (int *img, float min_x, float max_x, float min_y,
         float max_y, int y_scale) {
 
     min_y = apply_scale (y_scale, min_y);
@@ -204,8 +189,8 @@ void paint_trololo (int *image, float min_x, float max_x, float min_y,
 
         j = HEIGHT - (int) ((value - min_y) * HEIGHT) / (max_y - min_y);
 
-        paint_rainbow_column (image, x, j, 80, 0, 120, 255);
-        //paint_function_column (image, x, j, prev_j, 255, 0, 0, 255);
+        paint_rainbow_column (img, x, j, 80, 0, 120, 255);
+        //paint_function_column (img, x, j, prev_j, 255, 0, 0, 255);
 
         prev_j = j;
     }
@@ -214,7 +199,7 @@ void paint_trololo (int *image, float min_x, float max_x, float min_y,
 /**
  *
  */
-void paint_price (int *image, struct row *rows, int num_rows, float min,
+void paint_price (int *img, struct row *rows, int num_rows, float min,
         float max, int y_scale) {
 
     min = apply_scale (y_scale, min);
@@ -231,7 +216,7 @@ void paint_price (int *image, struct row *rows, int num_rows, float min,
 
             j = HEIGHT - (int) ((price - min) * HEIGHT) / (max - min);
 
-            paint_function_column (image, x, j, prev_j, 0, 0, 0, 255);
+            paint_function_column (img, x, j, prev_j, 0, 0, 0, 255);
 
             prev_j = j;
         }
@@ -243,35 +228,32 @@ void paint_price (int *image, struct row *rows, int num_rows, float min,
  *
  * Uses some data for the generation passed as arguments.
  */
-int generate_image (struct row *rows, int num_rows) {
+int generate_img (struct row *rows, int num_rows) {
 
     int code = 0;
 
-    // Creates 'image' buffer
-    int *image = create_image (WIDTH, HEIGHT);
-    if (image == NULL) {
+    // Creates 'img' buffer
+    int *img = create_img (WIDTH, HEIGHT);
+    if (img == NULL) {
         fprintf (stderr, "Couldn't create image buffer\n");
         return 1;
     }
 
-    // Paints data to 'image' buffer
+    // Paints data to 'img' buffer
 
-    paint_image_background (image, WIDTH, HEIGHT, 0, 0, 0, 0);
+    paint_img_background (img, WIDTH, HEIGHT, 0, 0, 0, 0);
 
-    //paint_price (image, rows, num_rows, 0, 65000, linear);
+    //paint_price (img, rows, num_rows, 0, 65000, linear);
 
-    paint_trololo (image, 554, num_rows + 554, 0.1, 1000000, logarithmic);
+    paint_trololo (img, 554, num_rows + 554, 0.1, 1000000, logarithmic);
+    paint_price (img, rows, num_rows, 0.1, 1000000, logarithmic);
 
-    //paint_log_axis (image, 0.1, 1000000);
+    // Writes 'img' buffer to file
+    code = write_img (img, IMG_PATH, WIDTH, HEIGHT);
 
-    paint_price (image, rows, num_rows, 0.1, 1000000, logarithmic);
-
-    // Writes 'image' buffer to file
-    code = write_image (image, IMG_PATH, WIDTH, HEIGHT);
-
-    // Frees 'image' buffer
-    if (image != NULL)
-        free (image);
+    // Frees 'img' buffer
+    if (img != NULL)
+        free (img);
 
     return code;
 }
@@ -279,21 +261,51 @@ int generate_image (struct row *rows, int num_rows) {
 /**
  * Processes image using 'MagickWand' lib (fucntions in 'myimgproc.h').
  */
-int process_image () {
+int process_img () {
 
     int code = 0;
 
-    // Paints watermark
-    code = paint_watermark (IMG_PATH, WIDTH, HEIGHT, top_left,
-            "javibonafonte.com", "rgb(0, 0, 0)");
+    MagickWand *magick_wand;
 
+    MagickWandGenesis (); // Initializaes MagickWand environment
+
+    magick_wand = NewMagickWand ();
+
+    // Reads image
+    code = magick_read_img (magick_wand, IMG_PATH);
+    if (code != 0)
+        goto finalise;
+
+    // Paints log axis
+    code = paint_log_axis (magick_wand, WIDTH, HEIGHT,
+            0.1, 1000000, "rgb(128, 128, 128)");
+    if (code != 0)
+        goto finalise;
+
+    // Annotates watermark
+    code = annotate_watermark (magick_wand, WIDTH, HEIGHT, bottom_right, 4,
+            "javibonafonte.com", "rgb(128, 128, 128)");
+    if (code != 0)
+        goto finalise;
+
+    // Writes image
+    code = magick_write_img (magick_wand, IMG_PATH);
+    if (code != 0)
+        goto finalise;
+
+finalise:
+
+    magick_wand = DestroyMagickWand (magick_wand);
+
+    MagickWandTerminus(); // Terminates MagickWand environment
+    
     return code;
 }
 
 /**
  * Main.
  *
- *      1. Gets the neede data from the CSV file.
+ *      1. Gets the needed data from the CSV file.
  *      2. Generates image using that data.
  *      3. Processes generated image using that data.
  */
@@ -318,11 +330,16 @@ int main (int argc, char *argv[]) {
     //float max_price = get_max_price (rows, num_rows);
 
     // Generates image
-    code = generate_image (rows, num_rows);
+    code = generate_img (rows, num_rows);
+    if (code != 0)
+        goto finalise;
 
     // Processes image
-    if (code == 0)
-        code = process_image ();
+    code = process_img ();
+    if (code != 0)
+        goto finalise;
+
+finalise:
 
     return code;
 }

@@ -54,54 +54,54 @@ void hsl_to_rgb(int *r, int *g, int *b, int h, float s, float l) {
  * Returns integers RGBA image buffer of 'width' by 'height' or NULL if it
  * can't create it.
  */
-int *create_image(int width, int height) {
+int *create_img (int width, int height) {
 
-    int *image = (int *) malloc (width * height * CHAN * sizeof (int));
-    return image;
+    int *img = (int *) malloc (width * height * CHAN * sizeof (int));
+    return img;
 }
 
 /**
  * Returns index of image buffer with 'wdith' and 'CHAN' number of channels
  * in 'x','y'.
  */
-int get_image_index (int width, int x, int y) {
+int get_img_index (int width, int x, int y) {
 
     return y * width * CHAN + x * CHAN;
 }
 
 /**
- * Sets RGBA values in 'index' of 'image'.
+ * Sets RGBA values in 'index' of 'img'.
  */
-void set_rgba (int *image, int width, int x, int y,
+void set_rgba (int *img, int width, int x, int y,
         int r, int g, int b, int a) {
 
-    int index = get_image_index (width, x, y);
+    int index = get_img_index (width, x, y);
 
-    image[index] = r;
-    image[index + 1] = g;
-    image[index + 2] = b;
-    image[index + 3] = a;
+    img[index] = r;
+    img[index + 1] = g;
+    img[index + 2] = b;
+    img[index + 3] = a;
 }
 
 /**
- * Paints background of 'image' buffer with 'widht' and 'height' as RGBA
+ * Paints background of 'img' buffer with 'widht' and 'height' as RGBA
  * values.
  */
-void paint_image_background (int *image, int width, int height,
+void paint_img_background (int *img, int width, int height,
         int r, int g, int b, int a) {
 
     int x, y;
 
     for (x = 0; x < width; x++) {
         for (y = 0; y < height; y++)
-            set_rgba (image, width, x, y, r, g, b, a);
+            set_rgba (img, width, x, y, r, g, b, a);
     }
 }
 
 /**
- * Writes 'image' buffer of 'width' and 'height' in 'path'.
+ * Writes 'img' buffer of 'width' and 'height' in 'path'.
  */
-int write_image (int *image, char *path, int width, int height) {
+int write_img (int *img, char *path, int width, int height) {
 
     int code = 0;
 
@@ -144,16 +144,16 @@ int write_image (int *image, char *path, int width, int height) {
     png_bytep row = (png_bytep) malloc (width * CHAN * sizeof (png_byte));
 
     // Writes image data
-    int x, y, row_index, image_index, channel;
+    int x, y, row_index, img_index, channel;
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
 
             row_index = x * CHAN;
-            image_index = get_image_index (width, x, y);
+            img_index = get_img_index (width, x, y);
 
             for (channel = 0; channel < CHAN; channel++) // For channels...
-                row[row_index + channel] = image[image_index + channel];
+                row[row_index + channel] = img[img_index + channel];
         }
         png_write_row (png_ptr, row);
     }
