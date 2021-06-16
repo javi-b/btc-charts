@@ -4,8 +4,6 @@
  * Javi Bonafonte
  *
  * TODO
- *  - use only MagickWand ?
- *  - add anotations (prices, dates, ...)
  *  - stock to flow
  */
 
@@ -14,6 +12,7 @@
 #include <math.h>
 #include <MagickWand/MagickWand.h>
 
+#include "util/util.h"
 #include "myimg/myimg.h"
 #include "myimgproc/myimgproc.h"
 
@@ -31,8 +30,6 @@ struct row {
     char date[STR_LEN];
     float price;
 };
-
-enum scales {linear, logarithmic};
 
 /**
  * Returns number of lines in 'fp'.
@@ -108,26 +105,6 @@ int get_max_price (struct row *rows, int num_rows) {
     }
 
     return max_price;
-}
-
-/**
- * Applies 'scale' to 'value' and returns it.
- */
-float apply_scale (int scale, float value) {
-
-    switch (scale) {
-
-        case linear:
-            return value;
-
-        case logarithmic:
-            if (value <= 0)
-                return value;
-            return (float) log (value);
-
-        default:
-            return -1;
-    }
 }
 
 /**
@@ -243,9 +220,15 @@ int generate_img (struct row *rows, int num_rows) {
 
     paint_img_background (img, WIDTH, HEIGHT, 0, 0, 0, 0);
 
-    //paint_price (img, rows, num_rows, 0, 65000, linear);
+    /*
+    paint_axis (img, WIDTH, HEIGHT, 0, 65000, linear, 10000,
+            204, 204, 204, 255);
+    paint_price (img, rows, num_rows, 0, 65000, linear);
+    */
 
     paint_trololo (img, 554, num_rows + 554, 0.1, 1000000, logarithmic);
+    paint_axis (img, WIDTH, HEIGHT, 0.1, 1000000, logarithmic, 10,
+            204, 204, 204, 255);
     paint_price (img, rows, num_rows, 0.1, 1000000, logarithmic);
 
     // Writes 'img' buffer to file
@@ -276,9 +259,17 @@ int process_img () {
     if (code != 0)
         goto finalise;
 
+    /*
+    // Paints linear axis
+    code = annotate_axis_values (magick_wand, WIDTH, HEIGHT, 0, 65000,
+            linear, 10000, "rgb(128, 128, 128)");
+    if (code != 0)
+        goto finalise;
+        */
+
     // Paints log axis
-    code = paint_log_axis (magick_wand, WIDTH, HEIGHT,
-            0.1, 1000000, "rgb(128, 128, 128)");
+    code = annotate_axis_values (magick_wand, WIDTH, HEIGHT, 0.1, 1000000,
+            logarithmic, 10, "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
 

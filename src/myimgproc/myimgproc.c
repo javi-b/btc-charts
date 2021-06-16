@@ -9,6 +9,7 @@
 #include <string.h>
 #include <MagickWand/MagickWand.h>
 
+#include "../util/util.h"
 #include "myimgproc.h"
 
 #define FONT "Unifont" // Font family
@@ -47,40 +48,6 @@ int magick_write_img (MagickWand *magick_wand, char *img_path) {
         fprintf (stderr, "Couldn't write image '%s'\n", img_path);
         code = 1;
     }
-
-    return code;
-}
-
-/**
- * Draws line of 'color' from 'sx','sy' to 'ex','ey' to image in
- * 'magick_wand'.
- */
-int draw_line (MagickWand *magick_wand, double sx, double sy,
-        double ex, double ey, char *color) {
-
-    int code = 0;
-    MagickBooleanType status;
-
-    DrawingWand *drawing_wand;
-    PixelWand *pixel_wand;
-
-    drawing_wand = NewDrawingWand ();
-    pixel_wand = NewPixelWand ();
-
-    // Sets drawing wand
-    PixelSetColor (pixel_wand, color);
-    DrawSetStrokeColor (drawing_wand, pixel_wand);
-
-    // Draws line
-    DrawLine (drawing_wand, sx, sy, ex, ey);
-    status = MagickDrawImage (magick_wand, drawing_wand);
-    if (status == MagickFalse) {
-        fprintf (stderr, "Couldn't draw line\n");
-        code = 1;
-    }
-
-    drawing_wand = DestroyDrawingWand (drawing_wand);
-    pixel_wand = DestroyPixelWand (pixel_wand);
 
     return code;
 }
@@ -164,29 +131,39 @@ int annotate_watermark (MagickWand *magick_wand, int width, int height,
 }
 
 /**
- * Paints logarithmic scale y axis lines on 'img' from 'min' to 'max'.
- * Each line marks '10 * previous line'.
+ * Paints y axis values on 'img' from 'min' to 'max'. The color is 'color'.
+ *
+ *      - If the scale is linear, each line marks 'step' more than the
+ *      previous one.
+ *      - If the scale is logarithmic, each line marks 'y * step' more than
+ *      the previous one.
  */
-int paint_log_axis (MagickWand *magick_wand, int width, int height,
-        float min, float max, char *color) {
+int annotate_axis_values (MagickWand *magick_wand, int width, int height,
+        float min, float max, int scale, float step, char *color) {
 
     int code = 0;
-    float log_min = log (min);
-    float log_max = log (max);
+
+    float scaled_min = apply_scale (scale, min);
+    float scaled_max = apply_scale (scale, max);
     int j, j_text;
+    float y;
 
     const int pad = 2;
     char text[10];
 
-    for (float y = min; y <= max; y *= 10) {
+    y = min;
+    while (y <= max) {
 
-        j = height - (log (y) - log_min) * height / (log_max - log_min);
+        j = height - (apply_scale (scale, y) - scaled_min) * height
+            / (scaled_max - scaled_min);
+        if (j == height)
+            j--;
 
-        code = draw_line (magick_wand, 0, j, width - 1, j, color);
-        if (code != 0)
-            return code;
+        if (y != (int) y)
+            sprintf (text, "%.1f", y);
+        else
+            sprintf (text, "%.0f", y);
 
-        sprintf (text, "%.0f", y);
         j_text = j + FONT_SIZE;
         if (j_text > height)
             j_text = j - pad;
@@ -194,6 +171,16 @@ int paint_log_axis (MagickWand *magick_wand, int width, int height,
         code = annotate_img (magick_wand, pad, j_text, 0, text, color);
         if (code != 0)
             return code;
+
+        switch (scale) {
+            case linear:
+            default:
+                y += step;
+                break;
+            case logarithmic:
+                y *= step;
+                break;
+        }
     }
 
     return code;

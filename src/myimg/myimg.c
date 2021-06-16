@@ -9,6 +9,7 @@
 #include <math.h>
 #include <png.h>
 
+#include "../util/util.h"
 #include "myimg.h"
 
 #define CHAN 4 // Channels of the color mode
@@ -95,6 +96,45 @@ void paint_img_background (int *img, int width, int height,
     for (x = 0; x < width; x++) {
         for (y = 0; y < height; y++)
             set_rgba (img, width, x, y, r, g, b, a);
+    }
+}
+
+/**
+ * Paints y axis lines on 'img' from 'min' to 'max'. The color is 'rgba'.
+ *
+ *      - If the scale is linear, each line marks 'step' more than the
+ *      previous one.
+ *      - If the scale is logarithmic, each line marks 'y * step' more than
+ *      the previous one.
+ */
+void paint_axis (int *img, int width, int height, float min, float max,
+        int scale, float step, int r, int g, int b, int a) {
+
+    float scaled_min = apply_scale (scale, min);
+    float scaled_max = apply_scale (scale, max);
+    int x, j;
+    float y;
+
+    y = min;
+    while (y <= max) {
+
+        j = height - (apply_scale (scale, y) - scaled_min) * height
+            / (scaled_max - scaled_min);
+        if (j == height)
+            j--;
+
+        for (x = 0; x < width; x++)
+            set_rgba (img, width, x, j, r, g, b, a);
+
+        switch (scale) {
+            case linear:
+            default:
+                y += step;
+                break;
+            case logarithmic:
+                y *= step;
+                break;
+        }
     }
 }
 
