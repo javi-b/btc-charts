@@ -4,7 +4,7 @@
  * Javi Bonafonte
  *
  * TODO
- *  - stock to flow
+ *  - use bitcoinity data for stock to flow
  */
 
 #include <stdlib.h>
@@ -25,6 +25,8 @@
 
 // BTC CSV constants
 #define BTC_CSV_PATH "data/bitcoinity_data.csv"
+#define DAYS_FROM_GEN 554 // Days from Genesis Block to first day in file
+                          // Genesis Block was on 2009-01-09
 
 struct row {
     char date[STR_LEN];
@@ -146,10 +148,10 @@ void paint_function_column (int *img, int x, int j, int prev_j,
  *
  */
 void paint_trololo (int *img, float min_x, float max_x, float min_y,
-        float max_y, int y_scale) {
+        float max_y, int scale) {
 
-    min_y = apply_scale (y_scale, min_y);
-    max_y = apply_scale (y_scale, max_y);
+    min_y = apply_scale (scale, min_y);
+    max_y = apply_scale (scale, max_y);
     int day, j, prev_j;
     float value;
 
@@ -158,10 +160,8 @@ void paint_trololo (int *img, float min_x, float max_x, float min_y,
 
         day = (int) x * (max_x - min_x) / WIDTH + min_x;
 
-        //value = apply_scale (linear, 0.2911 * x); // y = 0.2911x
-        
-        // y = 10^(2.9065 * ln (days from 2009/01/09) - 19.493)
-        value = apply_scale (y_scale,
+        // y = 10^(2.9065 * ln (days from genesis) - 19.493)
+        value = apply_scale (scale,
                 (float) pow (10, 2.9065 * log (day) - 19.493));
 
         j = HEIGHT - (int) ((value - min_y) * HEIGHT) / (max_y - min_y);
@@ -174,19 +174,85 @@ void paint_trololo (int *img, float min_x, float max_x, float min_y,
 }
 
 /**
+ * Returns Bitcoin block reward at the time of 'days_since_gen'.
+ * (Aproximated theorical calculation).
+ */
+float get_btc_block_reward (int days_since_gen) {
+
+    float reward = 50;
+    int halvings = (int) (days_since_gen / 1460);
+
+    for (int i = 0; i < halvings; i++)
+        reward /= 2;
+
+    return reward;
+}
+
+/**
+ * Returns total stock of Bitcoin at the time of 'days_since_gen'.
+ * (Aproximated theorical calculation).
+ */
+float get_btc_stock (int days_since_gen) {
+
+    float reward = 50;
+    int halvings = (int) (days_since_gen / 1460);
+    float stock;
+
+    for (int i = 0; i < halvings; i++) {
+        stock += 210000 * reward;
+        reward /= 2;
+    }
+
+    int days_since_last_halving = days_since_gen % 1460;
+    // One block per every 10 minutes of the day (144 blocks per day)
+    int blocks_since_last_halving = days_since_last_halving * 144;
+
+    stock += blocks_since_last_halving * reward;
+
+    return stock;
+}
+
+/**
+ *
+ */
+void paint_sf_model (int *img, int min_x, int max_x, float min_y,
+        float max_y, int scale) {
+
+    min_y = apply_scale (scale, min_y);
+    max_y = apply_scale (scale, max_y);
+    int day, j, prev_j;
+    float stock, reward, sf, model;
+
+    for (int x = 0; x < WIDTH; x++) {
+
+        day = (int) x * (max_x - min_x) / WIDTH + min_x;
+        stock = get_btc_stock (day);
+        reward = get_btc_block_reward (day);
+        sf = stock / (reward * 365 * 144);
+        model = apply_scale (scale, exp (-1.84) * pow (sf, 3.36));
+
+        j = HEIGHT - (int) ((model - min_y) * HEIGHT) / (max_y - min_y);
+
+        paint_function_column (img, x, j, prev_j, 255, 0, 0, 255);
+
+        prev_j = j;
+    }
+}
+
+/**
  *
  */
 void paint_price (int *img, struct row *rows, int num_rows, float min,
-        float max, int y_scale) {
+        float max, int scale) {
 
-    min = apply_scale (y_scale, min);
-    max = apply_scale (y_scale, max);
+    min = apply_scale (scale, min);
+    max = apply_scale (scale, max);
     int x, j, prev_j;
     double price;
 
     for (x = 0; x < WIDTH; x++) {
 
-        price = apply_scale (y_scale,
+        price = apply_scale (scale,
                 rows[x * (int) num_rows / WIDTH].price);
 
         if (price != -1) {
@@ -226,9 +292,12 @@ int generate_img (struct row *rows, int num_rows) {
     paint_price (img, rows, num_rows, 0, 65000, linear);
     */
 
-    paint_trololo (img, 554, num_rows + 554, 0.1, 1000000, logarithmic);
+    paint_trololo (img, DAYS_FROM_GEN, num_rows + DAYS_FROM_GEN,
+            0.1, 1000000, logarithmic);
     paint_axis (img, WIDTH, HEIGHT, 0.1, 1000000, logarithmic, 10,
             204, 204, 204, 255);
+    paint_sf_model (img, DAYS_FROM_GEN, num_rows + DAYS_FROM_GEN,
+            0.1, 1000000, logarithmic);
     paint_price (img, rows, num_rows, 0.1, 1000000, logarithmic);
 
     // Writes 'img' buffer to file
@@ -265,7 +334,7 @@ int process_img () {
             linear, 10000, "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
-        */
+    */
 
     // Paints log axis
     code = annotate_axis_values (magick_wand, WIDTH, HEIGHT, 0.1, 1000000,
