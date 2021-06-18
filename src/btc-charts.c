@@ -371,7 +371,7 @@ int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
     int code = 0;
 
     // Creates image
-    //code = create_img (cfg.w, cfg.h);
+    code = create_img (cfg.w, cfg.h);
     if (code != 0)
         goto finalise;
 
