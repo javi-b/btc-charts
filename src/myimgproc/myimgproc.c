@@ -2,9 +2,9 @@
  * My image processing library. Uses the MagickWand API.
  *
  * When using it always start by calling 'start_img_proc (char *img_path)'
- * with the path of the image that needs to be processed. Then apply the
- * changes made by calling 'apply_img_proc ()' and alway finish by calling
- * 'finish_img_proc ()' to terminate the MagickWand environment.
+ * with the path of the image that needs to be processed. After making any
+ * changes with other functions, apply them by calling 'apply_img_proc ()'.
+ * Always finish by calling 'finish_img_proc ()'.
  *
  * Javi Bonafonte
  */
@@ -51,43 +51,6 @@ int start_img_proc (char *img_path) {
     }
 
     return 0;
-}
-
-/**
- * Uses 'Magick_Wand' to write image to 'Img_Path.
- */
-int apply_img_proc () {
-
-    // If MagickWand environment is not instantiated...
-    if (IsMagickWandInstantiated() == MagickFalse) {
-        fprintf (stderr, "MagickWand environment is not instantiated.\n");
-        return 1;
-    }
-
-    MagickBooleanType status;
-
-    // Writes image
-    status = MagickWriteImage (Magick_Wand, Img_Path);
-    if (status == MagickFalse) {
-        fprintf (stderr, "Couldn't write image '%s'\n", Img_Path);
-        return 1;
-    }
-
-    return 0;
-}
-
-/**
- * Tries to destroy the 'Magick_Wand' and terminate the environment.
- *
- * Must be the last function to run of this library!!!
- */
-void finish_img_proc () {
-
-    if (Magick_Wand != NULL)
-        Magick_Wand = DestroyMagickWand (Magick_Wand);
-
-    if (IsMagickWandInstantiated() == MagickTrue)
-        MagickWandTerminus();
 }
 
 /**
@@ -183,10 +146,8 @@ int annotate_watermark (int width, int height,
 /**
  * Paints y axis values on 'img' from 'min' to 'max'. The color is 'color'.
  *
- *      - If the scale is linear, each line marks 'step' more than the
- *      previous one.
- *      - If the scale is logarithmic, each line marks 'y * step' more than
- *      the previous one.
+ *      - If the 'scale' is linear, each line is at 'y + step'.
+ *      - If the 'scale' is logarithmic, each line is at 'y * step'.
  */
 int annotate_axis_values (int width, int height, float min, float max,
         int scale, float step, char *color) {
@@ -240,5 +201,42 @@ int annotate_axis_values (int width, int height, float min, float max,
     }
 
     return code;
+}
+
+/**
+ * Uses 'Magick_Wand' to write image to 'Img_Path.
+ */
+int apply_img_proc () {
+
+    // If MagickWand environment is not instantiated...
+    if (IsMagickWandInstantiated() == MagickFalse) {
+        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        return 1;
+    }
+
+    MagickBooleanType status;
+
+    // Writes image
+    status = MagickWriteImage (Magick_Wand, Img_Path);
+    if (status == MagickFalse) {
+        fprintf (stderr, "Couldn't write image '%s'\n", Img_Path);
+        return 1;
+    }
+
+    return 0;
+}
+
+/**
+ * Tries to destroy the 'Magick_Wand' and terminate the environment.
+ *
+ * Must be the last function to run of this library!!!
+ */
+void finish_img_proc () {
+
+    if (Magick_Wand != NULL)
+        Magick_Wand = DestroyMagickWand (Magick_Wand);
+
+    if (IsMagickWandInstantiated() == MagickTrue)
+        MagickWandTerminus();
 }
 

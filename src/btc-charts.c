@@ -169,7 +169,7 @@ struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
 /**
  *
  */
-void paint_rainbow_column (int *img, int x, int j, int thickness,
+void paint_rainbow_column (int x, int j, int thickness,
         int min_hue, int max_hue, int alpha) {
 
     int r, g, b;
@@ -181,7 +181,7 @@ void paint_rainbow_column (int *img, int x, int j, int thickness,
             hue = ((y - j + thickness + min_hue) * max_hue / thickness)
                 % 360;
             hsl_to_rgb (&r, &g, &b, hue, 1, 0.7);
-            set_rgba (img, WIDTH, x, y, r, g, b, alpha);
+            set_rgba (x, y, r, g, b, alpha);
         }
     }
 }
@@ -189,14 +189,14 @@ void paint_rainbow_column (int *img, int x, int j, int thickness,
 /**
  *
  */
-void paint_function_column (int *img, int x, int j, int prev_j,
+void paint_function_column (int x, int j, int prev_j,
         int r, int g, int b, int a) {
 
     for (int y = 0; y < HEIGHT; y++) {
         if ((x > 0 && ((j < prev_j && y < prev_j && y > j)
                         || (j > prev_j && y > prev_j && y < j))) 
                 || y == j) {
-            set_rgba (img, WIDTH, x, y, r, g, b, a);
+            set_rgba (x, y, r, g, b, a);
         }
     }
 }
@@ -204,7 +204,7 @@ void paint_function_column (int *img, int x, int j, int prev_j,
 /**
  *
  */
-void paint_trololo (int *img, struct chart_cfg cfg) {
+void paint_trololo (struct chart_cfg cfg) {
 
     cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
     cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
@@ -223,8 +223,8 @@ void paint_trololo (int *img, struct chart_cfg cfg) {
         j = cfg.h - (int) ((value - cfg.min_y) * cfg.h)
             / (cfg.max_y - cfg.min_y);
 
-        paint_rainbow_column (img, x, j, 80, 0, 120, 255);
-        //paint_function_column (img, x, j, prev_j, 255, 0, 0, 255);
+        paint_rainbow_column (x, j, 80, 0, 120, 255);
+        //paint_function_column (x, j, prev_j, 255, 0, 0, 255);
 
         prev_j = j;
     }
@@ -272,7 +272,7 @@ float get_btc_stock (int days_since_gen) {
 /**
  *
  */
-void paint_sf_model (int *img, struct chart_cfg cfg) {
+void paint_sf_model (struct chart_cfg cfg) {
 
     cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
     cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
@@ -290,7 +290,7 @@ void paint_sf_model (int *img, struct chart_cfg cfg) {
         j = cfg.h - (int) ((model - cfg.min_y) * cfg.h)
             / (cfg.max_y - cfg.min_y);
 
-        paint_function_column (img, x, j, prev_j, 255, 0, 0, 255);
+        paint_function_column (x, j, prev_j, 255, 0, 0, 255);
 
         prev_j = j;
     }
@@ -299,7 +299,7 @@ void paint_sf_model (int *img, struct chart_cfg cfg) {
 /**
  *
  */
-void paint_price (int *img, struct row *rows, int num_rows,
+void paint_price (struct row *rows, int num_rows,
         struct chart_cfg cfg) {
 
     cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
@@ -322,7 +322,7 @@ void paint_price (int *img, struct row *rows, int num_rows,
             j = cfg.h- (int) ((price - cfg.min_y) * cfg.h)
                 / (cfg.max_y - cfg.min_y);
 
-            paint_function_column (img, x, j, prev_j, 0, 0, 0, 255);
+            paint_function_column (x, j, prev_j, 0, 0, 0, 255);
 
             prev_j = j;
         }
@@ -330,49 +330,47 @@ void paint_price (int *img, struct row *rows, int num_rows,
 }
 
 /**
- * Generates desired chart image using 'libpng' (functions in 'myimg.h').
+ * Generates desired chart image using 'myimg' library.
  *
- * Uses some data for the generation passed as arguments.
+ * Uses some data passed as arguments.
  */
 int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
 
     int code = 0;
 
-    // Creates 'img' buffer
-    int *img = create_img (cfg.w, cfg.h);
-    if (img == NULL) {
-        fprintf (stderr, "Couldn't create image buffer\n");
-        return 1;
-    }
+    // Creates image
+    code = create_img (cfg.w, cfg.h);
+    if (code != 0)
+        goto finalise;
 
-    // Paints data to 'img' buffer
+    // Paints data to image
 
-    paint_img_background (img, cfg.w, cfg.h, 0, 0, 0, 0);
+    paint_img_background (0, 0, 0, 0);
 
     if (cfg.paint_trololo)
-        paint_trololo (img, cfg);
+        paint_trololo (cfg);
 
-    paint_axis (img, cfg.w, cfg.h, cfg.min_y, cfg.max_y, cfg.scale,
-            cfg.axis_step, 204, 204, 204, 255);
+    paint_axis (cfg.min_y, cfg.max_y, cfg.scale, cfg.axis_step,
+            204, 204, 204, 255);
 
     if (cfg.paint_sf_model)
-        paint_sf_model (img, cfg);
+        paint_sf_model (cfg);
 
     if (cfg.paint_price)
-        paint_price (img, rows, num_rows, cfg);
+        paint_price (rows, num_rows, cfg);
 
-    // Writes 'img' buffer to file
-    code = write_img (img, IMG_PATH, cfg.w, cfg.h);
+    // Writes image to file
+    code = write_img (IMG_PATH);
 
-    // Frees 'img' buffer
-    if (img != NULL)
-        free (img);
+finalise:
 
+    // Frees image
+    free_img ();
     return code;
 }
 
 /**
- * Processes image using 'MagickWand' lib (fucntions in 'myimgproc.h').
+ * Processes image using 'myimgproc' library.
  */
 int process_img (struct chart_cfg cfg) {
 
@@ -397,11 +395,10 @@ int process_img (struct chart_cfg cfg) {
 
     // Applies the changes
     code = apply_img_proc ();
-    if (code != 0)
-        goto finalise;
 
 finalise:
 
+    // Finishes image processing
     finish_img_proc ();
     return code;
 }

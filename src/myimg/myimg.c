@@ -1,12 +1,16 @@
 /**
- * My image library.
+ * My image library. Uses libpng.
+ *
+ * When using it always start by calling
+ * 'create_img (int width, int height)' with the size of the image that
+ * will be generated. When the image is ready, write it by calling
+ * 'write_img (char *path)' and always finish by calling 'free_img ()'.
  *
  * Javi Bonafonte
  */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
 #include <png.h>
 
 #include "../util/util.h"
@@ -14,101 +18,78 @@
 
 #define CHAN 4 // Channels of the color mode
 
+int *Img; // Global integers RGBA image buffer
+int Width, Height; // Global width and height of the 'Img'
+
 /**
  * use this...
  * http://www.labbookpages.co.uk/software/imgProc/libPNG.html
  */
 
 /**
- * Converts HSL color to RGB
- * where 0 <= 'h' < 360, 0 <= 's' < 1, 0 <= 'l' < 1
+ * Creates integers RGBA image buffer of 'width' by 'height' and sabes it
+ * as a global variables. It also saves the 'width' and 'height'.
+ *
+ * Must be the first function to run of this library!!!
  */
-void hsl_to_rgb(int *r, int *g, int *b, int h, float s, float l) {
+int create_img (int width, int height) {
 
-    float c, x, m, r0 = 0, g0 = 0, b0 = 0;
+    Width = width;
+    Height = height;
 
-    c = (1 - fabs (2 * l - 1)) * s;
-    x = c * (1 - fabs (fmodf (h / 60.0, 2) - 1));
-    m = l - c / 2;
+    Img = (int *) malloc (Width * Height * CHAN * sizeof (int));
 
-    if ((h >= 0 && h < 60) || (h >= 300 && h < 360))
-        r0 = c;
-    else if ((h >= 60 && h < 120) || (h >= 240 && h < 300))
-        r0 = x;
+    if (Img == NULL) {
+        fprintf (stderr, "Couldn't create image buffer\n");
+        return 1;
+    }
 
-    if ((h >= 0 && h < 60) || (h >= 180 && h < 240))
-        g0 = x;
-    else if (h>= 60 && h < 180)
-        g0 = c;
-
-    if ((h >= 120 && h < 180) || (h >= 300 && h < 360))
-        b0 = x;
-    else if (h>= 180 && h < 300)
-        b0 = c;
-
-    *r = round ((r0 + m) * 255);
-    *g = round ((g0 + m) * 255);
-    *b = round ((b0 + m) * 255);
+    return 0;
 }
 
 /**
- * Returns integers RGBA image buffer of 'width' by 'height' or NULL if it
- * can't create it.
- */
-int *create_img (int width, int height) {
-
-    int *img = (int *) malloc (width * height * CHAN * sizeof (int));
-    return img;
-}
-
-/**
- * Returns index of image buffer with 'wdith' and 'CHAN' number of channels
+ * Returns index of image buffer with 'Width' and 'CHAN' number of channels
  * in 'x','y'.
  */
-int get_img_index (int width, int x, int y) {
+int get_img_index (int x, int y) {
 
-    return y * width * CHAN + x * CHAN;
+    return y * Width * CHAN + x * CHAN;
 }
 
 /**
- * Sets RGBA values in 'index' of 'img'.
+ * Sets 'rgba' values in position 'x','y' of 'Img'.
  */
-void set_rgba (int *img, int width, int x, int y,
-        int r, int g, int b, int a) {
+void set_rgba (int x, int y, int r, int g, int b, int a) {
 
-    int index = get_img_index (width, x, y);
+    int index = get_img_index (x, y);
 
-    img[index] = r;
-    img[index + 1] = g;
-    img[index + 2] = b;
-    img[index + 3] = a;
+    Img[index] = r;
+    Img[index + 1] = g;
+    Img[index + 2] = b;
+    Img[index + 3] = a;
 }
 
 /**
- * Paints background of 'img' buffer with 'widht' and 'height' as RGBA
- * values.
+ * Paints background of 'Img' buffer as 'rgba' values.
  */
-void paint_img_background (int *img, int width, int height,
-        int r, int g, int b, int a) {
+void paint_img_background (int r, int g, int b, int a) {
 
     int x, y;
 
-    for (x = 0; x < width; x++) {
-        for (y = 0; y < height; y++)
-            set_rgba (img, width, x, y, r, g, b, a);
+    for (x = 0; x < Width; x++) {
+        for (y = 0; y < Height; y++)
+            set_rgba (x, y, r, g, b, a);
     }
 }
 
 /**
- * Paints y axis lines on 'img' from 'min' to 'max'. The color is 'rgba'.
+ * Paints y axis lines on 'Img' from 'min' to 'max'. The color is 'rgba'.
  *
- *      - If the scale is linear, each line marks 'step' more than the
- *      previous one.
- *      - If the scale is logarithmic, each line marks 'y * step' more than
- *      the previous one.
+ *      - If the 'scale' is linear, each line is at 'y + step'.
+ *      - If the 'scale' is logarithmic, each line is at 'y * step'.
  */
-void paint_axis (int *img, int width, int height, float min, float max,
-        int scale, float step, int r, int g, int b, int a) {
+void paint_axis (float min, float max, int scale, float step,
+        int r, int g, int b, int a) {
 
     float scaled_min = apply_scale (scale, min);
     float scaled_max = apply_scale (scale, max);
@@ -118,13 +99,13 @@ void paint_axis (int *img, int width, int height, float min, float max,
     y = min;
     while (y <= max) {
 
-        j = height - (apply_scale (scale, y) - scaled_min) * height
+        j = Height - (apply_scale (scale, y) - scaled_min) * Height
             / (scaled_max - scaled_min);
-        if (j == height)
+        if (j == Height)
             j--;
 
-        for (x = 0; x < width; x++)
-            set_rgba (img, width, x, j, r, g, b, a);
+        for (x = 0; x < Width; x++)
+            set_rgba (x, j, r, g, b, a);
 
         switch (scale) {
             case linear:
@@ -139,9 +120,9 @@ void paint_axis (int *img, int width, int height, float min, float max,
 }
 
 /**
- * Writes 'img' buffer of 'width' and 'height' in 'path'.
+ * Writes 'Img' buffer in 'path'.
  */
-int write_img (int *img, char *path, int width, int height) {
+int write_img (char *path) {
 
     int code = 0;
 
@@ -173,7 +154,7 @@ int write_img (int *img, char *path, int width, int height) {
     png_init_io (png_ptr, fp);
 
     // Writes header (8 bit colour depth)
-    png_set_IHDR (png_ptr, info_ptr, width, height, 8,
+    png_set_IHDR (png_ptr, info_ptr, Width, Height, 8,
             PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
@@ -181,19 +162,19 @@ int write_img (int *img, char *path, int width, int height) {
 
 
     // Allocates memory for one row (3 bytes per pixel - RGBA)
-    png_bytep row = (png_bytep) malloc (width * CHAN * sizeof (png_byte));
+    png_bytep row = (png_bytep) malloc (Width * CHAN * sizeof (png_byte));
 
     // Writes image data
     int x, y, row_index, img_index, channel;
 
-    for (y = 0; y < height; y++) {
-        for (x = 0; x < width; x++) {
+    for (y = 0; y < Height; y++) {
+        for (x = 0; x < Width; x++) {
 
             row_index = x * CHAN;
-            img_index = get_img_index (width, x, y);
+            img_index = get_img_index (x, y);
 
             for (channel = 0; channel < CHAN; channel++) // For channels...
-                row[row_index + channel] = img[img_index + channel];
+                row[row_index + channel] = Img[img_index + channel];
         }
         png_write_row (png_ptr, row);
     }
@@ -216,5 +197,16 @@ finalise:
         free (row);
 
     return code;
+}
+
+/**
+ * Frees 'Img' buffer.
+ *
+ * Must be the last function to run of this library!!!
+ */
+void free_img () {
+
+    if (Img != NULL)
+        free (Img);
 }
 
