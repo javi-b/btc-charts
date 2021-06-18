@@ -5,7 +5,6 @@
  *
  * TODO
  *  - separate chart code from csv file code
- *  - when skipping days of price, paint the average of skipped days
  *  - use bitcoinity data for stock to flow
  */
 
@@ -67,7 +66,7 @@ int get_num_lines (FILE *fp) {
 
 /**
  * Returns average price of all the availble exchanges prices in one row of
- * the Bitcoin CSV file.
+ * the Bitcoin CSV file or -1 if no price is found.
  *
  * (Specific to 'bitcoinity_data.csv')
  */
@@ -323,16 +322,43 @@ int paint_sf_model (struct chart_cfg cfg) {
 }
 
 /**
+ * Returns average price between 'row_a' and 'row_b' (including both
+ * 'row_a' and 'row_b').
+ */
+float get_avg_price (struct row *rows, int row_a, int row_b) {
+
+    float price, avg_price = 0;
+    int null_prices = 0, num_prices;
+
+    for (int row = row_a + 1; row <= row_b; row++) {
+
+        price = rows[row].price;
+
+        if (price > 0) // If the row has a file...
+            avg_price += rows[row].price;
+        else
+            null_prices++;
+
+    }
+
+    num_prices = row_b - row_a - null_prices;
+
+    if (avg_price <= 0 || num_prices <= 0)
+        return -1;
+
+    return avg_price / (row_b - row_a - null_prices);
+}
+
+/**
  *
  */
-int paint_price (struct row *rows, int num_rows,
-        struct chart_cfg cfg) {
+int paint_price (struct row *rows, int num_rows, struct chart_cfg cfg) {
 
     int code = 0;
 
     cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
     cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
-    int row, x, j, prev_j;
+    int row, prev_row = 0, x, j, prev_j;
     double price;
 
     for (x = 0; x < cfg.w; x++) {
@@ -341,7 +367,8 @@ int paint_price (struct row *rows, int num_rows,
             / cfg.w + cfg.min_x - DAYS_FROM_GEN;
 
         if (row < num_rows)
-            price = apply_scale (cfg.scale, rows[row].price);
+            price = apply_scale (cfg.scale,
+                    get_avg_price(rows, prev_row, row));
         else
             price = -1;
 
@@ -356,6 +383,8 @@ int paint_price (struct row *rows, int num_rows,
 
             prev_j = j;
         }
+
+        prev_row = row;
     }
 
     return code;
@@ -481,7 +510,7 @@ int main (int argc, char *argv[]) {
     //float max_price = get_max_price (rows, num_rows);
 
     struct chart_cfg cfg = get_chart_cfg (num_rows,
-            logarithmic, 1, 1, 1, 0);
+            logarithmic, 1, 1, 1, 4 * 365);
 
     // Generates image
     code = generate_img (rows, num_rows, cfg);
