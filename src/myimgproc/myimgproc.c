@@ -32,7 +32,7 @@ char *Img_Path; // Global image path
  */
 int start_img_proc (char *img_path) {
 
-    // If MagickWand environment is not instantiated...
+    // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
         // Initializes MagickWand environment and creates magick wand
         MagickWandGenesis ();
@@ -63,9 +63,10 @@ int start_img_proc (char *img_path) {
 int annotate_img (double x, double y, double angle,
         char *text, char *color) {
 
-    // If MagickWand environment is not instantiated...
+    // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
-        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        fprintf (stderr,
+                "MagickWand environment hasn't been instantiated.\n");
         return 1;
     }
 
@@ -107,9 +108,10 @@ int annotate_img (double x, double y, double angle,
 int annotate_watermark (int width, int height,
         int corner, int pad, char *text, char *color) {
 
-    // If MagickWand environment is not instantiated...
+    // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
-        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        fprintf (stderr,
+                "MagickWand environment hasn't been instantiated.\n");
         return 1;
     }
 
@@ -152,9 +154,10 @@ int annotate_watermark (int width, int height,
 int annotate_axis_values (int width, int height, float min, float max,
         int scale, float step, char *color) {
 
-    // If MagickWand environment is not instantiated...
+    // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
-        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        fprintf (stderr,
+                "MagickWand environment hasn't been instantiated.\n");
         return 1;
     }
 
@@ -208,9 +211,10 @@ int annotate_axis_values (int width, int height, float min, float max,
  */
 int apply_img_proc () {
 
-    // If MagickWand environment is not instantiated...
+    // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
-        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        fprintf (stderr,
+                "MagickWand environment hasn't been instantiated.\n");
         return 1;
     }
 

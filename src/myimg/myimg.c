@@ -22,11 +22,6 @@ int *Img; // Global integers RGBA image buffer
 int Width, Height; // Global width and height of the 'Img'
 
 /**
- * use this...
- * http://www.labbookpages.co.uk/software/imgProc/libPNG.html
- */
-
-/**
  * Creates integers RGBA image buffer of 'width' by 'height' and sabes it
  * as a global variables. It also saves the 'width' and 'height'.
  *
@@ -59,7 +54,13 @@ int get_img_index (int x, int y) {
 /**
  * Sets 'rgba' values in position 'x','y' of 'Img'.
  */
-void set_rgba (int x, int y, int r, int g, int b, int a) {
+int set_rgba (int x, int y, int r, int g, int b, int a) {
+
+    // If 'Img' buffer hasn't been created...
+    if (Img == NULL) {
+        fprintf (stderr, "Image buffer hasn't been created.\n");
+        return 1;
+    }
 
     int index = get_img_index (x, y);
 
@@ -67,12 +68,20 @@ void set_rgba (int x, int y, int r, int g, int b, int a) {
     Img[index + 1] = g;
     Img[index + 2] = b;
     Img[index + 3] = a;
+
+    return 0;
 }
 
 /**
  * Paints background of 'Img' buffer as 'rgba' values.
  */
-void paint_img_background (int r, int g, int b, int a) {
+int paint_img_background (int r, int g, int b, int a) {
+
+    // If 'Img' buffer hasn't been created...
+    if (Img == NULL) {
+        fprintf (stderr, "Image buffer hasn't been created.\n");
+        return 1;
+    }
 
     int x, y;
 
@@ -80,6 +89,8 @@ void paint_img_background (int r, int g, int b, int a) {
         for (y = 0; y < Height; y++)
             set_rgba (x, y, r, g, b, a);
     }
+
+    return 0;
 }
 
 /**
@@ -88,8 +99,14 @@ void paint_img_background (int r, int g, int b, int a) {
  *      - If the 'scale' is linear, each line is at 'y + step'.
  *      - If the 'scale' is logarithmic, each line is at 'y * step'.
  */
-void paint_axis (float min, float max, int scale, float step,
+int paint_axis (float min, float max, int scale, float step,
         int r, int g, int b, int a) {
+
+    // If 'Img' buffer hasn't been created...
+    if (Img == NULL) {
+        fprintf (stderr, "Image buffer hasn't been created.\n");
+        return 1;
+    }
 
     float scaled_min = apply_scale (scale, min);
     float scaled_max = apply_scale (scale, max);
@@ -117,12 +134,23 @@ void paint_axis (float min, float max, int scale, float step,
                 break;
         }
     }
+
+    return 0;
 }
 
 /**
  * Writes 'Img' buffer in 'path'.
+ *
+ * I used this...
+ * http://www.labbookpages.co.uk/software/imgProc/libPNG.html
  */
 int write_img (char *path) {
+
+    // If 'Img' buffer hasn't been created...
+    if (Img == NULL) {
+        fprintf (stderr, "Image buffer hasn't been created.\n");
+        return 1;
+    }
 
     int code = 0;
 

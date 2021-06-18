@@ -1,5 +1,5 @@
 /**
- * Generator of multiple Bitcoin charts PNG images using C + libpng.
+ * Generator of multiple Bitcoin charts PNG images.
  *
  * Javi Bonafonte
  *
@@ -169,8 +169,10 @@ struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
 /**
  *
  */
-void paint_rainbow_column (int x, int j, int thickness,
+int paint_rainbow_column (int x, int j, int thickness,
         int min_hue, int max_hue, int alpha) {
+
+    int code = 0;
 
     int r, g, b;
     float hue;
@@ -181,30 +183,44 @@ void paint_rainbow_column (int x, int j, int thickness,
             hue = ((y - j + thickness + min_hue) * max_hue / thickness)
                 % 360;
             hsl_to_rgb (&r, &g, &b, hue, 1, 0.7);
-            set_rgba (x, y, r, g, b, alpha);
+
+            code = set_rgba (x, y, r, g, b, alpha);
+            if (code != 0)
+                return code;
         }
     }
+
+    return code;
 }
 
 /**
  *
  */
-void paint_function_column (int x, int j, int prev_j,
+int paint_function_column (int x, int j, int prev_j,
         int r, int g, int b, int a) {
+
+    int code = 0;
 
     for (int y = 0; y < HEIGHT; y++) {
         if ((x > 0 && ((j < prev_j && y < prev_j && y > j)
                         || (j > prev_j && y > prev_j && y < j))) 
                 || y == j) {
-            set_rgba (x, y, r, g, b, a);
+
+            code = set_rgba (x, y, r, g, b, a);
+            if (code != 0)
+                return code;
         }
     }
+
+    return code;
 }
 
 /**
  *
  */
-void paint_trololo (struct chart_cfg cfg) {
+int paint_trololo (struct chart_cfg cfg) {
+
+    int code = 0;
 
     cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
     cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
@@ -223,11 +239,15 @@ void paint_trololo (struct chart_cfg cfg) {
         j = cfg.h - (int) ((value - cfg.min_y) * cfg.h)
             / (cfg.max_y - cfg.min_y);
 
-        paint_rainbow_column (x, j, 80, 0, 120, 255);
-        //paint_function_column (x, j, prev_j, 255, 0, 0, 255);
+        code = paint_rainbow_column (x, j, 80, 0, 120, 255);
+        //code = paint_function_column (x, j, prev_j, 255, 0, 0, 255);
+        if (code != 0)
+            return code;
 
         prev_j = j;
     }
+
+    return code;
 }
 
 /**
@@ -272,7 +292,9 @@ float get_btc_stock (int days_since_gen) {
 /**
  *
  */
-void paint_sf_model (struct chart_cfg cfg) {
+int paint_sf_model (struct chart_cfg cfg) {
+
+    int code = 0;
 
     cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
     cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
@@ -290,17 +312,23 @@ void paint_sf_model (struct chart_cfg cfg) {
         j = cfg.h - (int) ((model - cfg.min_y) * cfg.h)
             / (cfg.max_y - cfg.min_y);
 
-        paint_function_column (x, j, prev_j, 255, 0, 0, 255);
+        code = paint_function_column (x, j, prev_j, 255, 0, 0, 255);
+        if (code != 0)
+            return code;
 
         prev_j = j;
     }
+
+    return code;
 }
 
 /**
  *
  */
-void paint_price (struct row *rows, int num_rows,
+int paint_price (struct row *rows, int num_rows,
         struct chart_cfg cfg) {
+
+    int code = 0;
 
     cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
     cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
@@ -322,11 +350,15 @@ void paint_price (struct row *rows, int num_rows,
             j = cfg.h- (int) ((price - cfg.min_y) * cfg.h)
                 / (cfg.max_y - cfg.min_y);
 
-            paint_function_column (x, j, prev_j, 0, 0, 0, 255);
+            code = paint_function_column (x, j, prev_j, 0, 0, 0, 255);
+            if (code != 0)
+                return code;
 
             prev_j = j;
         }
     }
+
+    return code;
 }
 
 /**
@@ -339,25 +371,41 @@ int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
     int code = 0;
 
     // Creates image
-    code = create_img (cfg.w, cfg.h);
+    //code = create_img (cfg.w, cfg.h);
     if (code != 0)
         goto finalise;
 
-    // Paints data to image
+    // Paints image background
+    code = paint_img_background (0, 0, 0, 0);
+    if (code != 0)
+        goto finalise;
 
-    paint_img_background (0, 0, 0, 0);
+    if (cfg.paint_trololo) {
+        // Paints trololo
+        code = paint_trololo (cfg);
+        if (code != 0)
+            goto finalise;
+    }
 
-    if (cfg.paint_trololo)
-        paint_trololo (cfg);
-
-    paint_axis (cfg.min_y, cfg.max_y, cfg.scale, cfg.axis_step,
+    // Paints axis
+    code = paint_axis (cfg.min_y, cfg.max_y, cfg.scale, cfg.axis_step,
             204, 204, 204, 255);
+    if (code != 0)
+        goto finalise;
 
-    if (cfg.paint_sf_model)
-        paint_sf_model (cfg);
+    if (cfg.paint_sf_model) {
+        // Paints stock to flow model
+        code = paint_sf_model (cfg);
+        if (code != 0)
+            goto finalise;
+    }
 
-    if (cfg.paint_price)
-        paint_price (rows, num_rows, cfg);
+    if (cfg.paint_price) {
+        // Paints price
+        code = paint_price (rows, num_rows, cfg);
+        if (code != 0)
+            goto finalise;
+    }
 
     // Writes image to file
     code = write_img (IMG_PATH);
