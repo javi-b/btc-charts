@@ -4,6 +4,8 @@
  * Javi Bonafonte
  *
  * TODO
+ *  - when skipping days of price, paint the average of skipped days
+ *  - separate chart code from csv file code
  *  - use bitcoinity data for stock to flow
  */
 
@@ -28,10 +30,23 @@
 #define DAYS_FROM_GEN 554 // Days from Genesis Block to first day in file
                           // Genesis Block was on 2009-01-09
 
+// Struct with BTC price for a date (represents one row of the CSV file)
 struct row {
     char date[STR_LEN];
     float price;
 };
+
+// Struct with chart configuration parameters
+struct chart_cfg {
+    int w, h; // width and height of chart image
+    int paint_price, paint_trololo, paint_sf_model; // things to paint (0/1)
+    float min_x, max_x, min_y, max_y; // x values and y values to paint
+                                      // x = days, y = price
+    int scale; // scale of the y axis (linear or logarithmic)
+    float axis_step; // step of change between y axis lines
+};
+
+// ------------------------------------------------------------------------
 
 /**
  * Returns number of lines in 'fp'.
@@ -109,6 +124,49 @@ int get_max_price (struct row *rows, int num_rows) {
     return max_price;
 }
 
+// ------------------------------------------------------------------------
+
+/**
+ * Generates and returns the chart configuration.
+ */
+struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
+        int paint_price, int paint_trololo, int paint_sf_model,
+        int days_to_predict) {
+
+    struct chart_cfg cfg;
+
+    cfg.w = WIDTH;
+    cfg.h = HEIGHT;
+
+    cfg.paint_price = paint_price;
+    cfg.paint_trololo = paint_trololo;
+    cfg.paint_sf_model = paint_sf_model;
+
+    cfg.scale = scale;
+
+    switch (scale) {
+
+        case linear:
+            cfg.min_y = 0;
+            cfg.max_y = 65000;
+            cfg.axis_step = 10000;
+            break;
+
+        case logarithmic:
+            cfg.min_y = 0.1;
+            cfg.max_y = 10000000;
+            cfg.axis_step = 10;
+            break;
+    }
+
+    cfg.min_x = DAYS_FROM_GEN;
+    cfg.max_x = DAYS_FROM_GEN + num_days_in_file + days_to_predict;
+
+    return cfg;
+}
+
+// ------------------------------------------------------------------------
+
 /**
  *
  */
@@ -147,24 +205,24 @@ void paint_function_column (int *img, int x, int j, int prev_j,
 /**
  *
  */
-void paint_trololo (int *img, float min_x, float max_x, float min_y,
-        float max_y, int scale) {
+void paint_trololo (int *img, struct chart_cfg cfg) {
 
-    min_y = apply_scale (scale, min_y);
-    max_y = apply_scale (scale, max_y);
+    cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
+    cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
     int day, j, prev_j;
     float value;
 
 
-    for (int x = 0; x < WIDTH; x++) {
+    for (int x = 0; x < cfg.w; x++) {
 
-        day = (int) x * (max_x - min_x) / WIDTH + min_x;
+        day = (int) x * (cfg.max_x - cfg.min_x) / cfg.w + cfg.min_x;
 
         // y = 10^(2.9065 * ln (days from genesis) - 19.493)
-        value = apply_scale (scale,
+        value = apply_scale (cfg.scale,
                 (float) pow (10, 2.9065 * log (day) - 19.493));
 
-        j = HEIGHT - (int) ((value - min_y) * HEIGHT) / (max_y - min_y);
+        j = cfg.h - (int) ((value - cfg.min_y) * cfg.h)
+            / (cfg.max_y - cfg.min_y);
 
         paint_rainbow_column (img, x, j, 80, 0, 120, 255);
         //paint_function_column (img, x, j, prev_j, 255, 0, 0, 255);
@@ -215,23 +273,23 @@ float get_btc_stock (int days_since_gen) {
 /**
  *
  */
-void paint_sf_model (int *img, int min_x, int max_x, float min_y,
-        float max_y, int scale) {
+void paint_sf_model (int *img, struct chart_cfg cfg) {
 
-    min_y = apply_scale (scale, min_y);
-    max_y = apply_scale (scale, max_y);
+    cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
+    cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
     int day, j, prev_j;
     float stock, reward, sf, model;
 
-    for (int x = 0; x < WIDTH; x++) {
+    for (int x = 0; x < cfg.w; x++) {
 
-        day = (int) x * (max_x - min_x) / WIDTH + min_x;
+        day = (int) x * (cfg.max_x - cfg.min_x) / cfg.w + cfg.min_x;
         stock = get_btc_stock (day);
         reward = get_btc_block_reward (day);
         sf = stock / (reward * 365 * 144);
-        model = apply_scale (scale, exp (-1.84) * pow (sf, 3.36));
+        model = apply_scale (cfg.scale, exp (-1.84) * pow (sf, 3.36));
 
-        j = HEIGHT - (int) ((model - min_y) * HEIGHT) / (max_y - min_y);
+        j = cfg.h - (int) ((model - cfg.min_y) * cfg.h)
+            / (cfg.max_y - cfg.min_y);
 
         paint_function_column (img, x, j, prev_j, 255, 0, 0, 255);
 
@@ -242,22 +300,28 @@ void paint_sf_model (int *img, int min_x, int max_x, float min_y,
 /**
  *
  */
-void paint_price (int *img, struct row *rows, int num_rows, float min,
-        float max, int scale) {
+void paint_price (int *img, struct row *rows, int num_rows,
+        struct chart_cfg cfg) {
 
-    min = apply_scale (scale, min);
-    max = apply_scale (scale, max);
-    int x, j, prev_j;
+    cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
+    cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
+    int row, x, j, prev_j;
     double price;
 
-    for (x = 0; x < WIDTH; x++) {
+    for (x = 0; x < cfg.w; x++) {
 
-        price = apply_scale (scale,
-                rows[x * (int) num_rows / WIDTH].price);
+        row = (int) x * (cfg.max_x - cfg.min_x)
+            / cfg.w+ cfg.min_x - DAYS_FROM_GEN;
+
+        if (row < num_rows)
+            price = apply_scale (cfg.scale, rows[row].price);
+        else
+            price = -1;
 
         if (price != -1) {
 
-            j = HEIGHT - (int) ((price - min) * HEIGHT) / (max - min);
+            j = cfg.h- (int) ((price - cfg.min_y) * cfg.h)
+                / (cfg.max_y - cfg.min_y);
 
             paint_function_column (img, x, j, prev_j, 0, 0, 0, 255);
 
@@ -271,12 +335,12 @@ void paint_price (int *img, struct row *rows, int num_rows, float min,
  *
  * Uses some data for the generation passed as arguments.
  */
-int generate_img (struct row *rows, int num_rows) {
+int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
 
     int code = 0;
 
     // Creates 'img' buffer
-    int *img = create_img (WIDTH, HEIGHT);
+    int *img = create_img (cfg.w, cfg.h);
     if (img == NULL) {
         fprintf (stderr, "Couldn't create image buffer\n");
         return 1;
@@ -284,24 +348,22 @@ int generate_img (struct row *rows, int num_rows) {
 
     // Paints data to 'img' buffer
 
-    paint_img_background (img, WIDTH, HEIGHT, 0, 0, 0, 0);
+    paint_img_background (img, cfg.w, cfg.h, 0, 0, 0, 0);
 
-    /*
-    paint_axis (img, WIDTH, HEIGHT, 0, 65000, linear, 10000,
-            204, 204, 204, 255);
-    paint_price (img, rows, num_rows, 0, 65000, linear);
-    */
+    if (cfg.paint_trololo)
+        paint_trololo (img, cfg);
 
-    paint_trololo (img, DAYS_FROM_GEN, num_rows + DAYS_FROM_GEN,
-            0.1, 1000000, logarithmic);
-    paint_axis (img, WIDTH, HEIGHT, 0.1, 1000000, logarithmic, 10,
-            204, 204, 204, 255);
-    paint_sf_model (img, DAYS_FROM_GEN, num_rows + DAYS_FROM_GEN,
-            0.1, 1000000, logarithmic);
-    paint_price (img, rows, num_rows, 0.1, 1000000, logarithmic);
+    paint_axis (img, cfg.w, cfg.h, cfg.min_y, cfg.max_y, cfg.scale,
+            cfg.axis_step, 204, 204, 204, 255);
+
+    if (cfg.paint_sf_model)
+        paint_sf_model (img, cfg);
+
+    if (cfg.paint_price)
+        paint_price (img, rows, num_rows, cfg);
 
     // Writes 'img' buffer to file
-    code = write_img (img, IMG_PATH, WIDTH, HEIGHT);
+    code = write_img (img, IMG_PATH, cfg.w, cfg.h);
 
     // Frees 'img' buffer
     if (img != NULL)
@@ -313,7 +375,7 @@ int generate_img (struct row *rows, int num_rows) {
 /**
  * Processes image using 'MagickWand' lib (fucntions in 'myimgproc.h').
  */
-int process_img () {
+int process_img (struct chart_cfg cfg) {
 
     int code = 0;
 
@@ -328,22 +390,15 @@ int process_img () {
     if (code != 0)
         goto finalise;
 
-    /*
-    // Paints linear axis
-    code = annotate_axis_values (magick_wand, WIDTH, HEIGHT, 0, 65000,
-            linear, 10000, "rgb(128, 128, 128)");
-    if (code != 0)
-        goto finalise;
-    */
-
-    // Paints log axis
-    code = annotate_axis_values (magick_wand, WIDTH, HEIGHT, 0.1, 1000000,
-            logarithmic, 10, "rgb(128, 128, 128)");
+    // Annotates axis
+    code = annotate_axis_values (magick_wand, cfg.w, cfg.h,
+            cfg.min_y, cfg.max_y, cfg.scale, cfg.axis_step,
+            "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
 
     // Annotates watermark
-    code = annotate_watermark (magick_wand, WIDTH, HEIGHT, bottom_right, 4,
+    code = annotate_watermark (magick_wand, cfg.w, cfg.h, bottom_right, 4,
             "javibonafonte.com", "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
@@ -361,6 +416,8 @@ finalise:
     
     return code;
 }
+
+// ------------------------------------------------------------------------
 
 /**
  * Main.
@@ -389,13 +446,16 @@ int main (int argc, char *argv[]) {
 
     //float max_price = get_max_price (rows, num_rows);
 
+    struct chart_cfg cfg = get_chart_cfg (num_rows,
+            logarithmic, 1, 1, 1, 0);
+
     // Generates image
-    code = generate_img (rows, num_rows);
+    code = generate_img (rows, num_rows, cfg);
     if (code != 0)
         goto finalise;
 
     // Processes image
-    code = process_img ();
+    code = process_img (cfg);
     if (code != 0)
         goto finalise;
 
