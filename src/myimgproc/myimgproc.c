@@ -1,5 +1,10 @@
 /**
- * My image processing library.
+ * My image processing library. Uses the MagickWand API.
+ *
+ * When using it alwasy start by calling 'start_img_proc (char *img_path)'
+ * with the path of the image that needs to be processed and finish by
+ * calling 'finish_img_proc ()' to write the processed image and terminate
+ * the MagickWand environment.
  *
  * Javi Bonafonte
  */
@@ -16,51 +21,83 @@
 #define FONT_SIZE 16 // Font size (height)
 #define FONT_WIDTH 8 // Font width
 
-/**
- * Reads 'img_path' into 'magick_wand'.
- */
-int magick_read_img (MagickWand *magick_wand, char *img_path) {
+MagickWand *Magick_Wand; // Global magick wand
+char *Img_Path; // Global image path
 
-    int code = 0;
+/**
+ * If its not instantiated, initializes the MagickWand environment and
+ * reads 'img_path' into 'Magick_Wand'.
+ *
+ * Must be the first function to run of this library!!!
+ */
+int start_img_proc (char *img_path) {
+
+    // If MagickWand environment is not instantiated...
+    if (IsMagickWandInstantiated() == MagickFalse) {
+        // Initializes MagickWand environment and creates magick wand
+        MagickWandGenesis ();
+        Magick_Wand = NewMagickWand ();
+    }
+
+    Img_Path = img_path;
+
     MagickBooleanType status;
 
     // Reads image
-    status = MagickReadImage (magick_wand, img_path);
+    status = MagickReadImage (Magick_Wand, Img_Path);
     if (status == MagickFalse) {
-        fprintf (stderr, "Couldn't read image '%s'\n", img_path);
-        code = 1;
+        fprintf (stderr, "Couldn't read image '%s'\n", Img_Path);
+        return 1;
     }
 
-    return code;
+    return 0;
 }
 
 /**
- * Uses 'magick_wand' to write image to 'img_path'.
+ * Uses 'Magick_Wand' to write image to 'Img_Path' and
+ * terminates the MagickWand environment.
+ *
+ * Must be the last function to run of this library!!!
  */
-int magick_write_img (MagickWand *magick_wand, char *img_path) {
+int finish_img_proc () {
 
-    int code = 0;
+    // If MagickWand environment is not instantiated...
+    if (IsMagickWandInstantiated() == MagickFalse) {
+        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        return 1;
+    }
+
     MagickBooleanType status;
 
     // Writes image
-    status = MagickWriteImage (magick_wand, img_path);
+    status = MagickWriteImage (Magick_Wand, Img_Path);
     if (status == MagickFalse) {
-        fprintf (stderr, "Couldn't write image '%s'\n", img_path);
-        code = 1;
+        fprintf (stderr, "Couldn't write image '%s'\n", Img_Path);
+        return 1;
     }
 
-    return code;
+    // Destroys magick wand and terminates MagickWand environment
+    Magick_Wand = DestroyMagickWand (Magick_Wand);
+    MagickWandTerminus();
+
+    return 0;
 }
 
 /**
- * Annotates 'text' of 'color' on image in 'magick_wand' on position
+ * Annotates 'text' of 'color' on image in 'Magick_Wand' on position
  * 'x','y' and 'angle'.
  *
  * 'x' on the left of the text.
  * 'y' is the baseline of the text.
  */
-int annotate_img (MagickWand *magick_wand, double x, double y,
-        double angle, char *text, char *color) {
+int annotate_img (double x, double y, double angle,
+        char *text, char *color) {
+
+    // If MagickWand environment is not instantiated...
+    if (IsMagickWandInstantiated() == MagickFalse) {
+        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        return 1;
+    }
 
     int code = 0;
     MagickBooleanType status;
@@ -80,7 +117,7 @@ int annotate_img (MagickWand *magick_wand, double x, double y,
     DrawSetFillColor (drawing_wand, pixel_wand);
 
     // Annotates image
-    status = MagickAnnotateImage (magick_wand, drawing_wand, x, y, angle,
+    status = MagickAnnotateImage (Magick_Wand, drawing_wand, x, y, angle,
             text);
     if (status == MagickFalse) {
         fprintf (stderr, "Couldn't annotate image\n");
@@ -95,10 +132,16 @@ int annotate_img (MagickWand *magick_wand, double x, double y,
 
 /**
  * Annotates one line of 'text' of 'color' on the selected 'corner' of the
- * image on 'img_path' of size 'width'x'height'.
+ * image of size 'width'x'height'.
  */
-int annotate_watermark (MagickWand *magick_wand, int width, int height,
+int annotate_watermark (int width, int height,
         int corner, int pad, char *text, char *color) {
+
+    // If MagickWand environment is not instantiated...
+    if (IsMagickWandInstantiated() == MagickFalse) {
+        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        return 1;
+    }
 
     int len = strlen (text);
     int x, y;
@@ -127,7 +170,7 @@ int annotate_watermark (MagickWand *magick_wand, int width, int height,
             break;
     }
 
-    return annotate_img (magick_wand, x, y, 0, text, color);
+    return annotate_img (x, y, 0, text, color);
 }
 
 /**
@@ -138,8 +181,14 @@ int annotate_watermark (MagickWand *magick_wand, int width, int height,
  *      - If the scale is logarithmic, each line marks 'y * step' more than
  *      the previous one.
  */
-int annotate_axis_values (MagickWand *magick_wand, int width, int height,
-        float min, float max, int scale, float step, char *color) {
+int annotate_axis_values (int width, int height, float min, float max,
+        int scale, float step, char *color) {
+
+    // If MagickWand environment is not instantiated...
+    if (IsMagickWandInstantiated() == MagickFalse) {
+        fprintf (stderr, "MagickWand environment is not instantiated.\n");
+        return 1;
+    }
 
     int code = 0;
 
@@ -168,7 +217,7 @@ int annotate_axis_values (MagickWand *magick_wand, int width, int height,
         if (j_text > height)
             j_text = j - pad;
 
-        code = annotate_img (magick_wand, pad, j_text, 0, text, color);
+        code = annotate_img (pad, j_text, 0, text, color);
         if (code != 0)
             return code;
 

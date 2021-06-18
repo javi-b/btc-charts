@@ -4,15 +4,14 @@
  * Javi Bonafonte
  *
  * TODO
- *  - when skipping days of price, paint the average of skipped days
  *  - separate chart code from csv file code
+ *  - when skipping days of price, paint the average of skipped days
  *  - use bitcoinity data for stock to flow
  */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <MagickWand/MagickWand.h>
 
 #include "util/util.h"
 #include "myimg/myimg.h"
@@ -311,7 +310,7 @@ void paint_price (int *img, struct row *rows, int num_rows,
     for (x = 0; x < cfg.w; x++) {
 
         row = (int) x * (cfg.max_x - cfg.min_x)
-            / cfg.w+ cfg.min_x - DAYS_FROM_GEN;
+            / cfg.w + cfg.min_x - DAYS_FROM_GEN;
 
         if (row < num_rows)
             price = apply_scale (cfg.scale, rows[row].price);
@@ -379,41 +378,28 @@ int process_img (struct chart_cfg cfg) {
 
     int code = 0;
 
-    MagickWand *magick_wand;
-
-    MagickWandGenesis (); // Initializaes MagickWand environment
-
-    magick_wand = NewMagickWand ();
-
     // Reads image
-    code = magick_read_img (magick_wand, IMG_PATH);
+    code = start_img_proc (IMG_PATH);
     if (code != 0)
-        goto finalise;
+        return code;
 
     // Annotates axis
-    code = annotate_axis_values (magick_wand, cfg.w, cfg.h,
-            cfg.min_y, cfg.max_y, cfg.scale, cfg.axis_step,
-            "rgb(128, 128, 128)");
+    code = annotate_axis_values (cfg.w, cfg.h, cfg.min_y, cfg.max_y,
+            cfg.scale, cfg.axis_step, "rgb(128, 128, 128)");
     if (code != 0)
-        goto finalise;
+        return code;
 
     // Annotates watermark
-    code = annotate_watermark (magick_wand, cfg.w, cfg.h, bottom_right, 4,
+    code = annotate_watermark (cfg.w, cfg.h, bottom_right, 4,
             "javibonafonte.com", "rgb(128, 128, 128)");
     if (code != 0)
-        goto finalise;
+        return code;
 
     // Writes image
-    code = magick_write_img (magick_wand, IMG_PATH);
+    code = finish_img_proc (IMG_PATH);
     if (code != 0)
-        goto finalise;
+        return code;
 
-finalise:
-
-    magick_wand = DestroyMagickWand (magick_wand);
-
-    MagickWandTerminus(); // Terminates MagickWand environment
-    
     return code;
 }
 
