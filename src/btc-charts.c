@@ -378,28 +378,31 @@ int process_img (struct chart_cfg cfg) {
 
     int code = 0;
 
-    // Reads image
+    // Starts image processing of 'IMG_PATH'
     code = start_img_proc (IMG_PATH);
     if (code != 0)
-        return code;
+        goto finalise;
 
     // Annotates axis
     code = annotate_axis_values (cfg.w, cfg.h, cfg.min_y, cfg.max_y,
             cfg.scale, cfg.axis_step, "rgb(128, 128, 128)");
     if (code != 0)
-        return code;
+        goto finalise;
 
     // Annotates watermark
     code = annotate_watermark (cfg.w, cfg.h, bottom_right, 4,
             "javibonafonte.com", "rgb(128, 128, 128)");
     if (code != 0)
-        return code;
+        goto finalise;
 
-    // Writes image
-    code = finish_img_proc (IMG_PATH);
+    // Applies the changes
+    code = apply_img_proc ();
     if (code != 0)
-        return code;
+        goto finalise;
 
+finalise:
+
+    finish_img_proc ();
     return code;
 }
 

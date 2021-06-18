@@ -1,10 +1,10 @@
 /**
  * My image processing library. Uses the MagickWand API.
  *
- * When using it alwasy start by calling 'start_img_proc (char *img_path)'
- * with the path of the image that needs to be processed and finish by
- * calling 'finish_img_proc ()' to write the processed image and terminate
- * the MagickWand environment.
+ * When using it always start by calling 'start_img_proc (char *img_path)'
+ * with the path of the image that needs to be processed. Then apply the
+ * changes made by calling 'apply_img_proc ()' and alway finish by calling
+ * 'finish_img_proc ()' to terminate the MagickWand environment.
  *
  * Javi Bonafonte
  */
@@ -26,7 +26,7 @@ char *Img_Path; // Global image path
 
 /**
  * If its not instantiated, initializes the MagickWand environment and
- * reads 'img_path' into 'Magick_Wand'.
+ * creates the 'Magick_Wand'. Then, reads 'img_path' into 'Magick_Wand'.
  *
  * Must be the first function to run of this library!!!
  */
@@ -54,12 +54,9 @@ int start_img_proc (char *img_path) {
 }
 
 /**
- * Uses 'Magick_Wand' to write image to 'Img_Path' and
- * terminates the MagickWand environment.
- *
- * Must be the last function to run of this library!!!
+ * Uses 'Magick_Wand' to write image to 'Img_Path.
  */
-int finish_img_proc () {
+int apply_img_proc () {
 
     // If MagickWand environment is not instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
@@ -76,11 +73,21 @@ int finish_img_proc () {
         return 1;
     }
 
-    // Destroys magick wand and terminates MagickWand environment
-    Magick_Wand = DestroyMagickWand (Magick_Wand);
-    MagickWandTerminus();
-
     return 0;
+}
+
+/**
+ * Tries to destroy the 'Magick_Wand' and terminate the environment.
+ *
+ * Must be the last function to run of this library!!!
+ */
+void finish_img_proc () {
+
+    if (Magick_Wand != NULL)
+        Magick_Wand = DestroyMagickWand (Magick_Wand);
+
+    if (IsMagickWandInstantiated() == MagickTrue)
+        MagickWandTerminus();
 }
 
 /**
