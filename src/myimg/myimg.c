@@ -99,7 +99,7 @@ int paint_img_background (int r, int g, int b, int a) {
  *      - If the 'scale' is linear, each line is at 'y + step'.
  *      - If the 'scale' is logarithmic, each line is at 'y * step'.
  */
-int paint_axis (float min, float max, int scale, float step,
+int paint_y_axis (float min, float max, int scale, float step,
         int r, int g, int b, int a) {
 
     // If 'Img' buffer hasn't been created...

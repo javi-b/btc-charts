@@ -4,8 +4,9 @@
  * Javi Bonafonte
  *
  * TODO
- *  - separate chart code from csv file code
- *  - use bitcoinity data for stock to flow
+ *      - add x axis values
+ *      - separate chart code from csv file code
+ *      - use bitcoinity data for stock to flow
  */
 
 #include <stdlib.h>
@@ -41,7 +42,7 @@ struct chart_cfg {
     float min_x, max_x, min_y, max_y; // x values and y values to paint
                                       // x = days, y = price
     int scale; // scale of the y axis (linear or logarithmic)
-    float axis_step; // step of change between y axis lines
+    float x_axis_step, y_axis_step; // step of change between axis lines
 };
 
 // ------------------------------------------------------------------------
@@ -147,18 +148,20 @@ struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
         case linear:
             cfg.min_y = 0;
             cfg.max_y = 65000;
-            cfg.axis_step = 10000;
+            cfg.y_axis_step = 10000;
             break;
 
         case logarithmic:
             cfg.min_y = 0.1;
             cfg.max_y = 10000000;
-            cfg.axis_step = 10;
+            cfg.y_axis_step = 10;
             break;
     }
 
     cfg.min_x = DAYS_FROM_GEN;
     cfg.max_x = DAYS_FROM_GEN + num_days_in_file + days_to_predict;
+
+    cfg.x_axis_step = 365;
 
     return cfg;
 }
@@ -417,7 +420,7 @@ int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
     }
 
     // Paints axis
-    code = paint_axis (cfg.min_y, cfg.max_y, cfg.scale, cfg.axis_step,
+    code = paint_y_axis (cfg.min_y, cfg.max_y, cfg.scale, cfg.y_axis_step,
             204, 204, 204, 255);
     if (code != 0)
         goto finalise;
@@ -458,14 +461,20 @@ int process_img (struct chart_cfg cfg) {
     if (code != 0)
         goto finalise;
 
-    // Annotates axis
-    code = annotate_axis_values (cfg.w, cfg.h, cfg.min_y, cfg.max_y,
-            cfg.scale, cfg.axis_step, "rgb(128, 128, 128)");
+    // Annotates y axis
+    code = annotate_y_axis_values (cfg.h, cfg.min_y, cfg.max_y,
+            cfg.scale, cfg.y_axis_step, "rgb(128, 128, 128)");
+    if (code != 0)
+        goto finalise;
+
+    // Annotates x axis
+    code = annotate_x_axis_values (cfg.w, cfg.h, cfg.min_x, cfg.max_x,
+            cfg.x_axis_step, "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
 
     // Annotates watermark
-    code = annotate_watermark (cfg.w, cfg.h, bottom_right, 4,
+    code = annotate_watermark (cfg.w, cfg.h, bottom_right,
             "javibonafonte.com", "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
@@ -510,7 +519,7 @@ int main (int argc, char *argv[]) {
     //float max_price = get_max_price (rows, num_rows);
 
     struct chart_cfg cfg = get_chart_cfg (num_rows,
-            logarithmic, 1, 1, 1, 4 * 365);
+            logarithmic, 1, 1, 0, 1 * 365);
 
     // Generates image
     code = generate_img (rows, num_rows, cfg);
