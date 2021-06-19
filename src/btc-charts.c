@@ -14,6 +14,7 @@
 #include <math.h>
 
 #include "util/util.h"
+#include "btcutil/btcutil.h"
 #include "myimg/myimg.h"
 #include "myimgproc/myimgproc.h"
 
@@ -29,9 +30,14 @@
 #define DAYS_FROM_GEN 554 // Days from Genesis Block to first day in file
                           // Genesis Block was on 2009-01-09
 
+struct date {
+    int y, m, d;
+};
+
 // Struct with BTC price for a date (represents one row of the CSV file)
 struct row {
-    char date[STR_LEN];
+    int days_since_gen;
+    struct date date;
     float price;
 };
 
@@ -94,6 +100,16 @@ float get_row_avg_price (FILE *fp) {
 }
 
 /**
+ * Converts date string with format 'year-month-day' to a date struct.
+ */
+struct date string_to_date (char *date_string) {
+
+    struct date date;
+    sscanf (date_string, "%d-%d-%d", &date.y, &date.m, &date.d);
+    return date;
+}
+
+/**
  * Saves all rows except the titles one from 'fp' in the 'rows' array.
  */
 void get_rows (struct row *rows, FILE *fp) {
@@ -102,10 +118,17 @@ void get_rows (struct row *rows, FILE *fp) {
 
     fscanf (fp, "%*[^\n]\n"); // Reads first line (titles line)
 
-    // Reads rest of lines and saves date and average price in 'rows'
+    // Reads rest of lines and saves them in 'rows'
     // (Specific for 'bitcoinity_data.csv')
-    for (int i = 0; fscanf (fp, "%[^,]", rows[i].date) != EOF; i++)
+
+    char date_string[STR_LEN];
+
+    for (int i = 0; fscanf (fp, "%[^,]", date_string) != EOF; i++) {
+
+        rows[i].days_since_gen = i + DAYS_FROM_GEN;
+        rows[i].date = string_to_date (date_string);
         rows[i].price = get_row_avg_price (fp);
+    }
 }
 
 /**
@@ -250,45 +273,6 @@ int paint_trololo (struct chart_cfg cfg) {
     }
 
     return code;
-}
-
-/**
- * Returns Bitcoin block reward at the time of 'days_since_gen'.
- * (Aproximated theorical calculation).
- */
-float get_btc_block_reward (int days_since_gen) {
-
-    float reward = 50;
-    int halvings = (int) (days_since_gen / 1460);
-
-    for (int i = 0; i < halvings; i++)
-        reward /= 2;
-
-    return reward;
-}
-
-/**
- * Returns total stock of Bitcoin at the time of 'days_since_gen'.
- * (Aproximated theorical calculation).
- */
-float get_btc_stock (int days_since_gen) {
-
-    float reward = 50;
-    int halvings = (int) (days_since_gen / 1460);
-    float stock;
-
-    for (int i = 0; i < halvings; i++) {
-        stock += 210000 * reward;
-        reward /= 2;
-    }
-
-    int days_since_last_halving = days_since_gen % 1460;
-    // One block per every 10 minutes of the day (144 blocks per day)
-    int blocks_since_last_halving = days_since_last_halving * 144;
-
-    stock += blocks_since_last_halving * reward;
-
-    return stock;
 }
 
 /**
@@ -450,6 +434,19 @@ finalise:
 }
 
 /**
+ *
+ */
+int annotate_x_axis_years (struct chart_cfg cfg) {
+
+    float min_year = days_since_gen_to_years (cfg.min_x);
+    float max_year = days_since_gen_to_years (cfg.max_x);
+    float year_step = cfg.x_axis_step / 365;
+
+    return annotate_x_axis_values (cfg.w, cfg.h, min_year, max_year,
+            year_step, "rgb(128, 128, 128)");
+}
+
+/**
  * Processes image using 'myimgproc' library.
  */
 int process_img (struct chart_cfg cfg) {
@@ -468,8 +465,7 @@ int process_img (struct chart_cfg cfg) {
         goto finalise;
 
     // Annotates x axis
-    code = annotate_x_axis_values (cfg.w, cfg.h, cfg.min_x, cfg.max_x,
-            cfg.x_axis_step, "rgb(128, 128, 128)");
+    code = annotate_x_axis_years (cfg);
     if (code != 0)
         goto finalise;
 
