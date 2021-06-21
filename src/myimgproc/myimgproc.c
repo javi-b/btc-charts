@@ -1,10 +1,12 @@
 /**
  * My image processing library. Uses the MagickWand API.
  *
- * When using it always start by calling 'start_img_proc (char *img_path)'
- * with the path of the image that needs to be processed. After making any
- * changes with other functions, apply them by calling 'apply_img_proc ()'.
- * Always finish by calling 'finish_img_proc ()'.
+ * When using it always start by calling
+ * 'start_img_proc (char *img_path, int width, int height, int pad)'
+ * with the path, width, height and padding of the image that needs to be
+ * processed. After making any changes with other functions, apply them by
+ * calling 'apply_img_proc ()'. Always finish by calling
+ * 'finish_img_proc ()'.
  *
  * Javi Bonafonte
  */
@@ -20,19 +22,34 @@
 #define FONT "Unifont" // Font family
 #define FONT_SIZE 16 // Font size (height)
 #define FONT_WIDTH 8 // Font width
-#define WATERMARK_PAD 18 // Padding for watermark (FONT_SIZE + 2)
-#define AXIS_PAD 2 // Padding for axis values
 
-MagickWand *Magick_Wand; // Global magick wand
-char *Img_Path; // Global image path
+static MagickWand *Magick_Wand; // Global magick wand
+static char *Img_Path; // Global image path
+static int Width, Height, Pad; // Global width, height and padding
+                               // of the image
 
 /**
- * If its not instantiated, initializes the MagickWand environment and
- * creates the 'Magick_Wand'. Then, reads 'img_path' into 'Magick_Wand'.
+ * Returns the defined font size (height).
+ */
+int get_img_proc_font_size () {
+
+    return FONT_SIZE;
+}
+
+/**
+ * If its not instantiated, initializes the MagickWand environment, creates
+ * the 'Magick_Wand' and saves it as a global variable. Then, reads
+ * 'img_path' into 'Magick_Wand'. It also saves the 'img_path', 'width',
+ * 'height' and 'pad' of the image.
  *
  * Must be the first function to run of this library!!!
  */
-int start_img_proc (char *img_path) {
+int start_img_proc (char *img_path, int width, int height, int pad) {
+
+    Img_Path = img_path;
+    Width = width;
+    Height = height;
+    Pad = pad;
 
     // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
@@ -40,8 +57,6 @@ int start_img_proc (char *img_path) {
         MagickWandGenesis ();
         Magick_Wand = NewMagickWand ();
     }
-
-    Img_Path = img_path;
 
     MagickBooleanType status;
 
@@ -62,8 +77,8 @@ int start_img_proc (char *img_path) {
  * 'x' on the left of the text.
  * 'y' is the baseline of the text.
  */
-int annotate_img (double x, double y, double angle,
-        char *text, char *color) {
+int annotate_img (double x, double y, double angle, char *text,
+        char *color) {
 
     // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
@@ -105,10 +120,9 @@ int annotate_img (double x, double y, double angle,
 
 /**
  * Annotates one line of 'text' of 'color' on the selected 'corner' of the
- * image of size 'width'x'height'.
+ * image.
  */
-int annotate_watermark (int width, int height, int corner,
-        char *text, char *color) {
+int annotate_watermark (int corner, char *text, char *color) {
 
     // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
@@ -124,23 +138,23 @@ int annotate_watermark (int width, int height, int corner,
 
         case top_left:
         default:
-            x = WATERMARK_PAD;
-            y = FONT_SIZE + WATERMARK_PAD;
+            x = Pad;
+            y = FONT_SIZE + Pad;
             break;
 
         case top_right:
-            x = width - len * FONT_WIDTH - WATERMARK_PAD;
-            y = FONT_SIZE + WATERMARK_PAD;
+            x = Width - len * FONT_WIDTH - Pad;
+            y = FONT_SIZE + Pad;
             break;
 
         case bottom_right:
-            x = width - len * FONT_WIDTH - WATERMARK_PAD;
-            y = height - WATERMARK_PAD;
+            x = Width - len * FONT_WIDTH - Pad;
+            y = Height - Pad - FONT_SIZE / 4;
             break;
 
         case bottom_left:
-            x = WATERMARK_PAD;
-            y = height - WATERMARK_PAD;
+            x = Pad;
+            y = Height - Pad - FONT_SIZE / 4;
             break;
     }
 
@@ -150,9 +164,12 @@ int annotate_watermark (int width, int height, int corner,
 /**
  * Paints x axis values on 'img' from 'min' to 'max' starting at 'first'
  * and spacing them by 'step'. The color is 'color'.
+ *
+ * Note that the values are painted on the bottom padding!!! If there is
+ * not enought padding they won't show.
  */
-int annotate_x_axis_values (int width, int height, float min, float max,
-        float first, float step, char *color) {
+int annotate_x_axis_values (float min, float max, float first, float step,
+        char *color) {
 
     // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
@@ -163,14 +180,15 @@ int annotate_x_axis_values (int width, int height, float min, float max,
 
     int code = 0;
 
-    int i, j = height - AXIS_PAD;
+    int i, j = Height - Pad + FONT_SIZE;
 
     char text[10];
 
     for (float x = first; x <= max; x += step) {
 
-        i = (x - min) * width / (max - min);
-        if (i == width)
+        i = Pad + (x - min) * (Width - 2 * Pad) / (max - min);
+
+        if (i == Width - Pad)
             i--;
 
         if (x != (int) x)
@@ -193,8 +211,8 @@ int annotate_x_axis_values (int width, int height, float min, float max,
  *      - If the 'scale' is linear, each line is at 'y + step'.
  *      - If the 'scale' is logarithmic, each line is at 'y * step'.
  */
-int annotate_y_axis_values (int height, float min, float max, float first,
-        int scale, float step, char *color) {
+int annotate_y_axis_values (float min, float max, float first, int scale,
+        float step, char *color) {
 
     // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
@@ -215,21 +233,23 @@ int annotate_y_axis_values (int height, float min, float max, float first,
     y = first;
     while (y <= max) {
 
-        j = height - (apply_scale (scale, y) - scaled_min) * height
-            / (scaled_max - scaled_min);
-        if (j == height)
-            j--;
-
         if (y != (int) y)
             sprintf (text, "%.1f", y);
         else
             sprintf (text, "%.0f", y);
 
-        j_text = j + FONT_SIZE;
-        if (j_text > height)
-            j_text = j - AXIS_PAD;
+        j = Height - Pad -
+            (apply_scale (scale, y) - scaled_min) * (Height - 2 * Pad)
+            / (scaled_max - scaled_min);
 
-        code = annotate_img (AXIS_PAD, j_text, 0, text, color);
+        if (j == Height - Pad)
+            j--;
+
+        j_text = j + FONT_SIZE;
+        if (j_text > (Height - Pad))
+            j_text = j - FONT_SIZE / 4;
+
+        code = annotate_img (Pad, j_text, 0, text, color);
         if (code != 0)
             return code;
 
@@ -248,7 +268,7 @@ int annotate_y_axis_values (int height, float min, float max, float first,
 }
 
 /**
- * Uses 'Magick_Wand' to write image to 'Img_Path.
+ * Uses 'Magick_Wand' to write image to 'Img_Path'.
  */
 int apply_img_proc () {
 

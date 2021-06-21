@@ -2,9 +2,10 @@
  * My image library. Uses libpng.
  *
  * When using it always start by calling
- * 'create_img (int width, int height)' with the size of the image that
- * will be generated. When the image is ready, write it by calling
- * 'write_img (char *path)' and always finish by calling 'free_img ()'.
+ * 'create_img (int width, int height, int pad)' with the size of the image
+ * that will be generated and its padding. When the image is ready, write
+ * it by calling 'write_img (char *path)' and always finish by calling
+ * 'free_img ()'.
  *
  * Javi Bonafonte
  */
@@ -18,19 +19,22 @@
 
 #define CHAN 4 // Channels of the color mode
 
-int *Img; // Global integers RGBA image buffer
-int Width, Height; // Global width and height of the 'Img'
+static int *Img; // Global integers RGBA image buffer
+static int Width, Height, Pad; // Global width, height and padding
+                               // of the 'Img'
 
 /**
- * Creates integers RGBA image buffer of 'width' by 'height' and sabes it
- * as a global variables. It also saves the 'width' and 'height'.
+ * Creates an integers RGBA image buffer of 'width' by 'height' and saves
+ * it as a global variable. It also saves the 'width', 'height' and 'pad'
+ * of the image.
  *
  * Must be the first function to run of this library!!!
  */
-int create_img (int width, int height) {
+int create_img (int width, int height, int pad) {
 
     Width = width;
     Height = height;
+    Pad = pad;
 
     Img = (int *) malloc (Width * Height * CHAN * sizeof (int));
 
@@ -116,12 +120,14 @@ int paint_y_axis (float min, float max, int scale, float step,
     y = min;
     while (y <= max) {
 
-        j = Height - (apply_scale (scale, y) - scaled_min) * Height
+        j = Height - Pad -
+            (apply_scale (scale, y) - scaled_min) * (Height - 2 * Pad)
             / (scaled_max - scaled_min);
+
         if (j == Height)
             j--;
 
-        for (x = 0; x < Width; x++)
+        for (x = Pad; x < Width - Pad; x++)
             set_rgba (x, j, r, g, b, a);
 
         switch (scale) {
