@@ -148,10 +148,11 @@ int annotate_watermark (int width, int height, int corner,
 }
 
 /**
- * Paints x axis values on 'img' from 'min' to 'max'. The color is 'color'.
+ * Paints x axis values on 'img' from 'min' to 'max' starting at 'first'
+ * and spacing them by 'step'. The color is 'color'.
  */
 int annotate_x_axis_values (int width, int height, float min, float max,
-        float step, char *color) {
+        float first, float step, char *color) {
 
     // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {
@@ -166,7 +167,7 @@ int annotate_x_axis_values (int width, int height, float min, float max,
 
     char text[10];
 
-    for (float x = min; x <= max; x += step) {
+    for (float x = first; x <= max; x += step) {
 
         i = (x - min) * width / (max - min);
         if (i == width)
@@ -186,12 +187,13 @@ int annotate_x_axis_values (int width, int height, float min, float max,
 }
 
 /**
- * Paints y axis values on 'img' from 'min' to 'max'. The color is 'color'.
+ * Paints y axis values on 'img' from 'min' to 'max' starting at 'first'
+ * and spacing them by 'step'. The color is 'color'.
  *
  *      - If the 'scale' is linear, each line is at 'y + step'.
  *      - If the 'scale' is logarithmic, each line is at 'y * step'.
  */
-int annotate_y_axis_values (int height, float min, float max,
+int annotate_y_axis_values (int height, float min, float max, float first,
         int scale, float step, char *color) {
 
     // If MagickWand environment hasn't been instantiated...
@@ -210,7 +212,7 @@ int annotate_y_axis_values (int height, float min, float max,
 
     char text[10];
 
-    y = min;
+    y = first;
     while (y <= max) {
 
         j = height - (apply_scale (scale, y) - scaled_min) * height

@@ -443,7 +443,7 @@ int annotate_x_axis_years (struct chart_cfg cfg) {
     float year_step = cfg.x_axis_step / 365;
 
     return annotate_x_axis_values (cfg.w, cfg.h, min_year, max_year,
-            year_step, "rgb(128, 128, 128)");
+            ceil (min_year), year_step, "rgb(128, 128, 128)");
 }
 
 /**
@@ -459,7 +459,7 @@ int process_img (struct chart_cfg cfg) {
         goto finalise;
 
     // Annotates y axis
-    code = annotate_y_axis_values (cfg.h, cfg.min_y, cfg.max_y,
+    code = annotate_y_axis_values (cfg.h, cfg.min_y, cfg.max_y, cfg.min_y,
             cfg.scale, cfg.y_axis_step, "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
