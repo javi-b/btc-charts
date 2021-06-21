@@ -124,7 +124,7 @@ int paint_y_axis (float min, float max, int scale, float step,
             (apply_scale (scale, y) - scaled_min) * (Height - 2 * Pad)
             / (scaled_max - scaled_min);
 
-        if (j == Height)
+        if (j == Height - Pad)
             j--;
 
         for (x = Pad; x < Width - Pad; x++)

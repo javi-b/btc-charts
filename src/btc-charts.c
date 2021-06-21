@@ -267,7 +267,7 @@ int paint_trololo (struct chart_cfg cfg) {
             (int) ((value - cfg.min_y) * (cfg.h - 2 * cfg.pad))
             / (cfg.max_y - cfg.min_y);
 
-        code = paint_rainbow_column (cfg, x, j, 80, 0, 120, 255);
+        code = paint_rainbow_column (cfg, x, j, 65, 0, 120, 255);
         //code = paint_function_column (cfg, x, j, prev_j, 255, 0, 0, 255);
         if (code != 0)
             return code;
