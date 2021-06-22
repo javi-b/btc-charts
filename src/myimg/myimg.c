@@ -98,6 +98,32 @@ int paint_img_background (int r, int g, int b, int a) {
 }
 
 /**
+ * Paintf border of 'Img' just at the edge of the 'Pad'. The color 'rgba'.
+ */
+int paint_img_border (int r, int g, int b, int a) {
+
+    // If 'Img' buffer hasn't been created...
+    if (Img == NULL) {
+        fprintf (stderr, "Image buffer hasn't been created.\n");
+        return 1;
+    }
+
+    int x, y;
+
+    for (x = Pad - 1; x <= Width - Pad; x++) {
+        set_rgba (x, Pad - 1, r, g, b, a);
+        set_rgba (x, Height - Pad, r, g, b, a);
+    }
+
+    for (y = Pad - 1; y <= Height - Pad; y++) {
+        set_rgba (Pad - 1, y, r, g, b, a);
+        set_rgba (Width - Pad, y, r, g, b, a);
+    }
+
+    return 0;
+}
+
+/**
  * Paints x axis lines on 'Img' from 'min' to 'max' starting at 'first'
  * and spacing them by 'step'. The color is 'color'.
  */

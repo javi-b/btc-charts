@@ -45,10 +45,14 @@ struct row {
 struct chart_cfg {
     int w, h, pad; // width, height and padding of chart image
     int paint_price, paint_trololo, paint_sf_model; // things to paint (0/1)
-    float min_x, max_x, min_y, max_y; // x values and y values to paint
-                                      // x = days, y = price
-    float x_axis_step, y_axis_step; // step of change between axis lines
-    float min_x_year, max_x_year, x_axis_step_year; // x values in years
+
+    // x values to paint (days)
+    float min_x, max_x, first_x_axis, x_axis_step;
+    // x values in years
+    float min_x_year, max_x_year, first_x_year, x_axis_step_year;
+    // y values to paint (dollars)
+    float min_y, max_y, first_y_axis, y_axis_step;
+
     int scale; // scale of the y axis (linear or logarithmic)
 };
 
@@ -173,12 +177,14 @@ struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
         case linear:
             cfg.min_y = 0;
             cfg.max_y = 65000;
+            cfg.first_y_axis = 10000;
             cfg.y_axis_step = 10000;
             break;
 
         case logarithmic:
-            cfg.min_y = 0.1;
-            cfg.max_y = 10000000;
+            cfg.min_y = 0.1 * 0.9;
+            cfg.max_y = 10000000 * 1.1;
+            cfg.first_y_axis = 0.1;
             cfg.y_axis_step = 10;
             break;
     }
@@ -189,6 +195,7 @@ struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
 
     cfg.min_x_year = days_since_gen_to_years (cfg.min_x);
     cfg.max_x_year = days_since_gen_to_years (cfg.max_x);
+    cfg.first_x_year = ceil (cfg.min_x_year);
     cfg.x_axis_step_year = cfg.x_axis_step / 365;
 
     return cfg;
@@ -409,6 +416,11 @@ int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
     if (code != 0)
         goto finalise;
 
+    // Paints image border
+    code = paint_img_border (128, 128, 128, 255);
+    if (code != 0)
+        goto finalise;
+
     if (cfg.paint_trololo) {
         // Paints trololo
         code = paint_trololo (cfg);
@@ -417,14 +429,13 @@ int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
     }
 
     // Paints x axis
-    code = paint_x_axis (cfg.min_x_year, cfg.max_x_year,
-            ceil (cfg.min_x_year), cfg.x_axis_step_year,
-            204, 204, 204, 255);
+    code = paint_x_axis (cfg.min_x_year, cfg.max_x_year, cfg.first_x_year,
+            cfg.x_axis_step_year, 204, 204, 204, 255);
     if (code != 0)
         goto finalise;
 
     // Paints y axis
-    code = paint_y_axis (cfg.min_y, cfg.max_y, cfg.min_y, cfg.scale,
+    code = paint_y_axis (cfg.min_y, cfg.max_y, cfg.first_y_axis, cfg.scale,
             cfg.y_axis_step, 204, 204, 204, 255);
     if (code != 0)
         goto finalise;
@@ -467,13 +478,12 @@ int process_img (struct chart_cfg cfg) {
 
     // Annotates x axis
     code =  annotate_x_axis_values (cfg.min_x_year, cfg.max_x_year,
-            ceil (cfg.min_x_year), cfg.x_axis_step_year,
-            "rgb(128, 128, 128)");
+            cfg.first_x_year, cfg.x_axis_step_year, "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
 
     // Annotates y axis
-    code = annotate_y_axis_values (cfg.min_y, cfg.max_y, cfg.min_y,
+    code = annotate_y_axis_values (cfg.min_y, cfg.max_y, cfg.first_y_axis,
             cfg.scale, cfg.y_axis_step, "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;

@@ -143,12 +143,12 @@ int annotate_watermark (int corner, char *text, char *color) {
             break;
 
         case top_right:
-            x = Width - len * FONT_WIDTH - Pad;
+            x = Width - Pad - len * FONT_WIDTH - FONT_WIDTH / 4.0;
             y = FONT_SIZE + Pad;
             break;
 
         case bottom_right:
-            x = Width - len * FONT_WIDTH - Pad;
+            x = Width - Pad - len * FONT_WIDTH - FONT_WIDTH / 4.0;
             y = Height - Pad - FONT_SIZE / 4;
             break;
 
