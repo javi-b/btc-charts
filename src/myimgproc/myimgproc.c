@@ -180,7 +180,7 @@ int annotate_x_axis_values (float min, float max, float first, float step,
 
     int code = 0;
 
-    int i, j = Height - Pad + FONT_SIZE;
+    int i, i_text, j = Height - Pad + FONT_SIZE;
 
     char text[10];
 
@@ -196,7 +196,9 @@ int annotate_x_axis_values (float min, float max, float first, float step,
         else
             sprintf (text, "%.0f", x);
 
-        code = annotate_img (i, j, 0, text, color);
+        i_text = i - strlen (text) / 2.0 * FONT_WIDTH; // Text is centered
+
+        code = annotate_img (i_text, j, 0, text, color);
         if (code != 0)
             return code;
     }
@@ -225,7 +227,7 @@ int annotate_y_axis_values (float min, float max, float first, int scale,
 
     float scaled_min = apply_scale (scale, min);
     float scaled_max = apply_scale (scale, max);
-    int j, j_text;
+    int i = Pad, j, j_text;
     float y;
 
     char text[10];
@@ -249,7 +251,7 @@ int annotate_y_axis_values (float min, float max, float first, int scale,
         if (j_text > (Height - Pad))
             j_text = j - FONT_SIZE / 4;
 
-        code = annotate_img (Pad, j_text, 0, text, color);
+        code = annotate_img (i, j_text, 0, text, color);
         if (code != 0)
             return code;
 
