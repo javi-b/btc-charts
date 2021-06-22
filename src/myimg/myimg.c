@@ -98,12 +98,42 @@ int paint_img_background (int r, int g, int b, int a) {
 }
 
 /**
- * Paints y axis lines on 'Img' from 'min' to 'max'. The color is 'rgba'.
+ * Paints x axis lines on 'Img' from 'min' to 'max' starting at 'first'
+ * and spacing them by 'step'. The color is 'color'.
+ */
+int paint_x_axis (float min, float max, float first, float step,
+        int r, int g, int b, int a) {
+
+    // If 'Img' buffer hasn't been created...
+    if (Img == NULL) {
+        fprintf (stderr, "Image buffer hasn't been created.\n");
+        return 1;
+    }
+
+    int y, i;
+
+    for (float x = first; x <= max; x += step) {
+
+        i = Pad + (x - min) * (Width - 2 * Pad) / (max - min);
+
+        if (i == Width - Pad)
+            i--;
+
+        for (y = Pad; y < Height - Pad; y++)
+            set_rgba (i, y, r, g, b, a);
+    }
+
+    return 0;
+}
+
+/**
+ * Paints y axis lines on 'Img' from 'min' to 'max' starting at 'first'
+ * and spacing them by 'step'. The color is 'rgba'.
  *
  *      - If the 'scale' is linear, each line is at 'y + step'.
  *      - If the 'scale' is logarithmic, each line is at 'y * step'.
  */
-int paint_y_axis (float min, float max, int scale, float step,
+int paint_y_axis (float min, float max, float first, int scale, float step,
         int r, int g, int b, int a) {
 
     // If 'Img' buffer hasn't been created...
@@ -117,7 +147,7 @@ int paint_y_axis (float min, float max, int scale, float step,
     int x, j;
     float y;
 
-    y = min;
+    y = first;
     while (y <= max) {
 
         j = Height - Pad -
