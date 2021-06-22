@@ -213,8 +213,8 @@ int annotate_x_axis_values (float min, float max, float first, float step,
  *      - If the 'scale' is linear, each line is at 'y + step'.
  *      - If the 'scale' is logarithmic, each line is at 'y * step'.
  */
-int annotate_y_axis_values (float min, float max, float first, int scale,
-        float step, char *color) {
+int annotate_y_axis_values (float min, float max, float first, float step,
+        int scale, char *color) {
 
     // If MagickWand environment hasn't been instantiated...
     if (IsMagickWandInstantiated() == MagickFalse) {

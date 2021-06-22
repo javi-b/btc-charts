@@ -4,6 +4,7 @@
  * Javi Bonafonte
  *
  * TODO
+ *      - rgba is in a color struct
  *      - separate chart code from csv file code
  *      - use bitcoinity data for stock to flow
  *      - mark halvings ?
@@ -435,8 +436,8 @@ int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
         goto finalise;
 
     // Paints y axis
-    code = paint_y_axis (cfg.min_y, cfg.max_y, cfg.first_y_axis, cfg.scale,
-            cfg.y_axis_step, 204, 204, 204, 255);
+    code = paint_y_axis (cfg.min_y, cfg.max_y, cfg.first_y_axis,
+            cfg.y_axis_step, cfg.scale, 204, 204, 204, 255);
     if (code != 0)
         goto finalise;
 
@@ -484,7 +485,7 @@ int process_img (struct chart_cfg cfg) {
 
     // Annotates y axis
     code = annotate_y_axis_values (cfg.min_y, cfg.max_y, cfg.first_y_axis,
-            cfg.scale, cfg.y_axis_step, "rgb(128, 128, 128)");
+            cfg.y_axis_step, cfg.scale, "rgb(128, 128, 128)");
     if (code != 0)
         goto finalise;
 
