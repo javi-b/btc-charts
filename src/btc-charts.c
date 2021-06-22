@@ -15,9 +15,9 @@
 #include <math.h>
 
 #include "util/util.h"
-#include "btcutil/btcutil.h"
-#include "myimg/myimg.h"
-#include "myimgproc/myimgproc.h"
+#include "btc/btc.h"
+#include "img/img.h"
+#include "imgproc/imgproc.h"
 
 #define STR_LEN 128
 
@@ -184,7 +184,7 @@ struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
 
         case logarithmic:
             cfg.min_y = 0.1 * 0.9;
-            cfg.max_y = 10000000 * 1.1;
+            cfg.max_y = 1000000 * 1.1;
             cfg.first_y_axis = 0.1;
             cfg.y_axis_step = 10;
             break;
@@ -280,7 +280,7 @@ int paint_trololo (struct chart_cfg cfg) {
             (int) ((value - cfg.min_y) * (cfg.h - 2 * cfg.pad))
             / (cfg.max_y - cfg.min_y);
 
-        code = paint_rainbow_column (cfg, x, j, 65, 0, 120, 255);
+        code = paint_rainbow_column (cfg, x, j, 70, 0, 120, 255);
         //code = paint_function_column (cfg, x, j, prev_j, 255, 0, 0, 255);
         if (code != 0)
             return code;
@@ -399,7 +399,7 @@ int paint_price (struct row *rows, int num_rows, struct chart_cfg cfg) {
 }
 
 /**
- * Generates desired chart image using 'myimg' library.
+ * Generates desired chart image using 'img' library.
  *
  * Uses some data passed as arguments.
  */
@@ -466,7 +466,7 @@ finalise:
 }
 
 /**
- * Processes image using 'myimgproc' library.
+ * Processes image using 'imgproc' library.
  */
 int process_img (struct chart_cfg cfg) {
 

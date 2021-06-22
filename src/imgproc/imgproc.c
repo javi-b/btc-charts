@@ -17,7 +17,7 @@
 #include <MagickWand/MagickWand.h>
 
 #include "../util/util.h"
-#include "myimgproc.h"
+#include "imgproc.h"
 
 #define FONT "Unifont" // Font family
 #define FONT_SIZE 16 // Font size (height)

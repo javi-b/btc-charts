@@ -15,7 +15,7 @@
 #include <png.h>
 
 #include "../util/util.h"
-#include "myimg.h"
+#include "img.h"
 
 #define CHAN 4 // Channels of the color mode
 

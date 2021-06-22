@@ -4,7 +4,7 @@
  * Javi Bonafonte
  */
 
-#include "btcutil.h"
+#include "btc.h"
 
 #define GEN_YEAR 2009
 #define GEN_MONTH 1
