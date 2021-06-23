@@ -1,5 +1,5 @@
 /**
- * My image library. Uses libpng.
+ * My PNG image generation library. Uses libpng.
  *
  * When using it always start by calling
  * 'create_img (int width, int height, int pad)' with the size of the image
@@ -36,6 +36,7 @@ int create_img (int width, int height, int pad) {
     Height = height;
     Pad = pad;
 
+    // Allocates memory for the image buffer
     Img = (int *) malloc (Width * Height * CHAN * sizeof (int));
 
     if (Img == NULL) {

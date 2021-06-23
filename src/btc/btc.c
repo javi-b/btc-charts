@@ -1,5 +1,5 @@
 /**
- * Library with my general purpose Bitcoin functions.
+ * Library with my Bitcoin functions.
  *
  * Javi Bonafonte
  */

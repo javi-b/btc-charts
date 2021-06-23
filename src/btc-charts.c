@@ -5,7 +5,6 @@
  *
  * TODO
  *      - rgba is in a color struct
- *      - separate chart code from csv file code
  *      - use bitcoinity data for stock to flow
  *      - mark halvings ?
  */
@@ -16,33 +15,16 @@
 
 #include "util/util.h"
 #include "btc/btc.h"
+#include "btcdata/btcdata.h"
 #include "img/img.h"
 #include "imgproc/imgproc.h"
-
-#define STR_LEN 128
 
 // Image constants
 #define IMG_PATH "charts/chart.png"
 #define WIDTH 1024
 #define HEIGHT 576
 
-// BTC CSV constants
-#define BTC_CSV_PATH "data/bitcoinity_data.csv"
-#define DAYS_FROM_GEN 554 // Days from Genesis Block to first day in file
-                          // Genesis Block was on 2009-01-09
-
-struct date {
-    int y, m, d;
-};
-
-// Struct with BTC price for a date (represents one row of the CSV file)
-struct row {
-    int days_since_gen;
-    struct date date;
-    float price;
-};
-
-// Struct with chart configuration parameters
+// Struct containing the chart image configuration parameters
 struct chart_cfg {
     int w, h, pad; // width, height and padding of chart image
     int paint_price, paint_trololo, paint_sf_model; // things to paint (0/1)
@@ -57,107 +39,10 @@ struct chart_cfg {
     int scale; // scale of the y axis (linear or logarithmic)
 };
 
-// ------------------------------------------------------------------------
-
 /**
- * Returns number of lines in 'fp'.
+ * Generates and returns the chart image configuration.
  */
-int get_num_lines (FILE *fp) {
-
-    int num_lines = 0;
-    char c;
-
-    rewind (fp);
-
-    while ((c = fgetc (fp)) != EOF) {
-        if (c=='\n')
-            num_lines++;
-    }
-
-    return num_lines;
-}
-
-/**
- * Returns average price of all the availble exchanges prices in one row of
- * the Bitcoin CSV file or -1 if no price is found.
- *
- * (Specific to 'bitcoinity_data.csv')
- */
-float get_row_avg_price (FILE *fp) {
-
-    char price_str[STR_LEN];
-    int c;
-    float price, avg = 0;
-    int count = 0;
-
-    while ((c = fgetc (fp)) == ',') {
-        fscanf (fp, "%[^,\n]", price_str);
-        price = strtof (price_str, NULL);
-        if (price > 0) {
-            avg += price;
-            count++;
-        }
-    }
-
-    if (count > 0)
-        return avg / count;
-    else
-        return -1;
-}
-
-/**
- * Converts date string with format 'year-month-day' to a date struct.
- */
-struct date string_to_date (char *date_string) {
-
-    struct date date;
-    sscanf (date_string, "%d-%d-%d", &date.y, &date.m, &date.d);
-    return date;
-}
-
-/**
- * Saves all rows except the titles one from 'fp' in the 'rows' array.
- */
-void get_rows (struct row *rows, FILE *fp) {
-
-    rewind (fp);
-
-    fscanf (fp, "%*[^\n]\n"); // Reads first line (titles line)
-
-    // Reads rest of lines and saves them in 'rows'
-    // (Specific for 'bitcoinity_data.csv')
-
-    char date_string[STR_LEN];
-
-    for (int i = 0; fscanf (fp, "%[^,]", date_string) != EOF; i++) {
-
-        rows[i].days_since_gen = i + DAYS_FROM_GEN;
-        rows[i].date = string_to_date (date_string);
-        rows[i].price = get_row_avg_price (fp);
-    }
-}
-
-/**
- * Returns the maximum value of 'rows.price'.
- */
-int get_max_price (struct row *rows, int num_rows) {
-
-    int max_price = 0;
-
-    for (int i = 0; i < num_rows; i++) {
-        if (rows[i].price > max_price)
-            max_price = rows[i].price;
-    }
-
-    return max_price;
-}
-
-// ------------------------------------------------------------------------
-
-/**
- * Generates and returns the chart configuration.
- */
-struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
+struct chart_cfg get_chart_cfg (int scale,
         int paint_price, int paint_trololo, int paint_sf_model,
         int days_to_predict) {
 
@@ -190,8 +75,9 @@ struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
             break;
     }
 
-    cfg.min_x = DAYS_FROM_GEN;
-    cfg.max_x = DAYS_FROM_GEN + num_days_in_file + days_to_predict;
+    cfg.min_x = get_num_days_from_gen_to_first_btc_data ();
+    cfg.max_x = get_num_days_from_gen_to_first_btc_data ()
+        + get_num_btc_data_days () + days_to_predict;
     cfg.x_axis_step = 2 * 365;
 
     cfg.min_x_year = days_since_gen_to_years (cfg.min_x);
@@ -201,8 +87,6 @@ struct chart_cfg get_chart_cfg (int num_days_in_file, int scale,
 
     return cfg;
 }
-
-// ------------------------------------------------------------------------
 
 /**
  *
@@ -328,54 +212,26 @@ int paint_sf_model (struct chart_cfg cfg) {
 }
 
 /**
- * Returns average price between 'row_a' and 'row_b' (including both
- * 'row_a' and 'row_b').
- */
-float get_avg_price (struct row *rows, int row_a, int row_b) {
-
-    float price, avg_price = 0;
-    int null_prices = 0, num_prices;
-
-    for (int row = row_a + 1; row <= row_b; row++) {
-
-        price = rows[row].price;
-
-        if (price > 0) // If the row has a file...
-            avg_price += rows[row].price;
-        else
-            null_prices++;
-
-    }
-
-    num_prices = row_b - row_a - null_prices;
-
-    if (avg_price <= 0 || num_prices <= 0)
-        return -1;
-
-    return avg_price / (row_b - row_a - null_prices);
-}
-
-/**
  *
  */
-int paint_price (struct row *rows, int num_rows, struct chart_cfg cfg) {
+int paint_price (struct chart_cfg cfg) {
 
     int code = 0;
 
     cfg.min_y = apply_scale (cfg.scale, cfg.min_y);
     cfg.max_y = apply_scale (cfg.scale, cfg.max_y);
-    int row, prev_row = 0, x, j, prev_j = -1;
+    int num_days = get_num_btc_data_days ();
+    int day, prev_day = -1, x, j, prev_j = -1;
     double price;
 
     for (x = cfg.pad; x < cfg.w - cfg.pad; x++) {
 
-        row = cfg.min_x - DAYS_FROM_GEN +
-            (int) (x - cfg.pad) * (cfg.max_x - cfg.min_x)
+        day = (int) (x - cfg.pad) * (cfg.max_x - cfg.min_x)
             / (cfg.w - 2 * cfg.pad);
 
-        if (row < num_rows)
+        if (day < num_days)
             price = apply_scale (cfg.scale,
-                    get_avg_price(rows, prev_row, row));
+                    get_avg_price (prev_day, day));
         else
             price = -1;
 
@@ -392,7 +248,7 @@ int paint_price (struct row *rows, int num_rows, struct chart_cfg cfg) {
             prev_j = j;
         }
 
-        prev_row = row;
+        prev_day = day;
     }
 
     return code;
@@ -403,7 +259,7 @@ int paint_price (struct row *rows, int num_rows, struct chart_cfg cfg) {
  *
  * Uses some data passed as arguments.
  */
-int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
+int generate_img (struct chart_cfg cfg) {
 
     int code = 0;
 
@@ -450,7 +306,7 @@ int generate_img (struct row *rows, int num_rows, struct chart_cfg cfg) {
 
     if (cfg.paint_price) {
         // Paints price
-        code = paint_price (rows, num_rows, cfg);
+        code = paint_price (cfg);
         if (code != 0)
             goto finalise;
     }
@@ -505,40 +361,28 @@ finalise:
     return code;
 }
 
-// ------------------------------------------------------------------------
-
 /**
  * Main.
  *
- *      1. Gets the needed data from the CSV file.
- *      2. Generates image using that data.
- *      3. Processes generated image using that data.
+ *      1. Reads the Bitcoin data.
+ *      2. Sets the chart image configuration.
+ *      2. Generates image using that data and configuration.
+ *      3. Processes generated image using that data and configuration.
  */
 int main (int argc, char *argv[]) {
 
     int code = 0;
 
-    // Opens BTC csv file for reading
-    FILE *fp = fopen (BTC_CSV_PATH, "r");
-    if (fp == NULL) {
-        fprintf (stderr, "Couldn't open '%s' file\n", BTC_CSV_PATH);
-        return 1;
-    }
+    // Reads Bitcoin data
+    code = read_btc_data ();
+    if (code != 0)
+        goto finalise;
 
-    // Gets data from BTC CSV file
-    int num_rows = get_num_lines (fp) - 1;
-    struct row rows[num_rows];
-    get_rows (rows, fp);
-
-    fclose (fp);
-
-    //float max_price = get_max_price (rows, num_rows);
-
-    struct chart_cfg cfg = get_chart_cfg (num_rows,
-            logarithmic, 1, 1, 1, 1 * 365);
+    // Sets chart image configuration
+    struct chart_cfg cfg = get_chart_cfg (logarithmic, 1, 1, 1, 1 * 365);
 
     // Generates image
-    code = generate_img (rows, num_rows, cfg);
+    code = generate_img (cfg);
     if (code != 0)
         goto finalise;
 
@@ -549,6 +393,8 @@ int main (int argc, char *argv[]) {
 
 finalise:
 
+    // Frees Bitcoin data
+    free_btc_data ();
     return code;
 }
 
