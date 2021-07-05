@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <MagickWand/MagickWand.h>
+#include <wand/MagickWand.h>
 
 #include "../util/util.h"
 #include "imgproc.h"

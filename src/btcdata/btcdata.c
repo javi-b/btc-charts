@@ -15,7 +15,7 @@
 
 #define STR_LEN 128 // Default length of strings
 
-#define BTC_CSV_PATH "data/bitcoinity_data.csv"
+#define BTC_CSV_PATH "data/bitcoinity_price.csv"
 #define DAYS_FROM_GEN 554 // Days from genesis block to first day in file
                           // Genesis block was on 2009-01-09
 
@@ -114,7 +114,7 @@ void set_rows (FILE *fp, int num_rows) {
     fscanf (fp, "%*[^\n]\n"); // Reads first line (titles line)
 
     // Reads rest of lines and saves them in 'Rows'
-    // (Specific for 'bitcoinity_data.csv')
+    // (Specific to data from 'bitcoinity.org')
 
     char date_string[STR_LEN];
 

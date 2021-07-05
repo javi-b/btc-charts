@@ -4,9 +4,9 @@
  * Javi Bonafonte
  *
  * TODO
- *      - rgba is in a color struct
  *      - use bitcoinity data for stock to flow
- *      - mark halvings ?
+ *      - mark halvings?
+ *      - rgba is in a color struct?
  */
 
 #include <stdlib.h>
