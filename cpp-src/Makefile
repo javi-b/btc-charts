@@ -1,8 +1,10 @@
+CXXFLAGS = -Wall
+
 src = $(wildcard *.cpp)
 obj = $(src:.cpp=.o)
 
 btc-charts: $(obj)
-	g++ -Wall $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 .PHONY: clean
 clean:
