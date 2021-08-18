@@ -1,19 +1,26 @@
 /**
- * Namespace with my general purpose functions.
- *
- * Javi Bonafonte
+ * General purpose utilities that can be used anywhere in the whole
+ * project.
  */
 
 
+#pragma once
+
 #include <math.h>
 
-#include "util.h"
 
+namespace utils {
+
+enum Scale {kLinear, kLogarithmic};
+
+struct RGB {
+    int r, g, b;
+};
 
 /**
  * Applies 'scale' to 'value' and returns it.
  */
-float util::ApplyScale(Scale scale, float value) {
+float ApplyScale(const Scale scale, const float value) {
 
     switch (scale) {
 
@@ -34,7 +41,7 @@ float util::ApplyScale(Scale scale, float value) {
  * Converts HSL color to RGB
  * where 0 <= 'h' < 360, 0 <= 's' < 1, 0 <= 'l' < 1
  */
-util::RGB util::HslToRgb(int h, float s, float l) {
+RGB HslToRgb(const int h, const float s, const float l) {
 
     RGB rgb;
     float c, x, m, r0 = 0, g0 = 0, b0 = 0;
@@ -63,4 +70,6 @@ util::RGB util::HslToRgb(int h, float s, float l) {
     rgb.b = round ((b0 + m) * 255);
 
     return rgb;
+}
+
 }
