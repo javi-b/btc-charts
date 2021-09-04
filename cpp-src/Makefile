@@ -1,11 +1,18 @@
-CXXFLAGS = -Wall
+CXXFLAGS = -Wall -O2
+MAGICKFLAGS = `Magick++-config --cxxflags --cppflags --ldflags --libs`
 
-src = $(wildcard *.cpp)
-obj = $(src:.cpp=.o)
+SRC = $(wildcard *.cpp)
+OBJ = $(SRC:.cpp=.o)
 
-btc-charts: $(obj)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+btc-charts: $(OBJ) utils.h
+	$(CXX) $(CXXFLAGS) $(MAGICKFLAGS) $(OBJ) -o $@
+
+btc-charts.o: btc-charts.cpp utils.h
+	$(CXX) $(CXXFLAGS) $(MAGICKFLAGS) -c $< -o $@
+
+img.o: img.cpp img.h utils.h
+	$(CXX) $(CXXFLAGS) $(MAGICKFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:
-	rm -f $(obj) btc-charts
+	rm -vf $(OBJ) btc-charts

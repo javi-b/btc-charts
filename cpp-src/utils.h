@@ -1,26 +1,29 @@
+#pragma once
+
+#include <array>
+#include <math.h>
+
+
 /**
  * General purpose utilities that can be used anywhere in the whole
  * project.
  */
-
-
-#pragma once
-
-#include <math.h>
-
-
 namespace utils {
 
+/// Numeric scales enumeration.
 enum Scale {kLinear, kLogarithmic};
 
-struct RGB {
-    int r, g, b;
-};
+// each int should be a value from 0 to 255
+typedef std::array<int, 3> RGB; ///< RGB color mode type.
+typedef std::array<int, 4> RGBA; ///< RGBA color mode type.
 
 /**
- * Applies 'scale' to 'value' and returns it.
+ * Applies scale to value and returns it.
+ * @param scale Scale (linear or logarithmic).
+ * @param value Value.
+ * @return Result of applying scale to value.
  */
-float ApplyScale(const Scale scale, const float value) {
+inline float ApplyScale(const Scale scale, const float value) {
 
     switch (scale) {
 
@@ -38,10 +41,13 @@ float ApplyScale(const Scale scale, const float value) {
 }
 
 /**
- * Converts HSL color to RGB
- * where 0 <= 'h' < 360, 0 <= 's' < 1, 0 <= 'l' < 1
+ * Converts HSL color to RGB.
+ * @param h Hue (0-360).
+ * @param s Saturation (0-1).
+ * @param l Light (0-1).
+ * @return RGB color.
  */
-RGB HslToRgb(const int h, const float s, const float l) {
+inline RGB HslToRgb(const int h, const float s, const float l) {
 
     RGB rgb;
     float c, x, m, r0 = 0, g0 = 0, b0 = 0;
@@ -65,9 +71,9 @@ RGB HslToRgb(const int h, const float s, const float l) {
     else if (h>= 180 && h < 300)
         b0 = c;
 
-    rgb.r = round ((r0 + m) * 255);
-    rgb.g = round ((g0 + m) * 255);
-    rgb.b = round ((b0 + m) * 255);
+    rgb[0] = round ((r0 + m) * 255);
+    rgb[1] = round ((g0 + m) * 255);
+    rgb[2] = round ((b0 + m) * 255);
 
     return rgb;
 }
