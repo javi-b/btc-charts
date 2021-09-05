@@ -15,7 +15,7 @@
  * Main function.
  */
 int main() {
-    
+
     Img img = Img(WIDTH, HEIGHT, 18, "#ffffff");
     img.Write(IMG_PATH);
 
