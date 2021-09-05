@@ -55,7 +55,7 @@ dkms.conf
 *swp
 
 # Binary
-btc-charts
+btc_charts
 
 # Chart images
 charts/*
