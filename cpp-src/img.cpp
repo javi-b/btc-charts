@@ -6,8 +6,8 @@
 /**
  * Constructor.
  * Creates the image and sets its background.
- * @param width Width for image.
- * @param height Height for image.
+ *
+ * @param width,height Image width ang height sizes.
  * @param pad Padding for image.
  * @param bg_color Background color for image.
  */
@@ -21,22 +21,17 @@ Img::Img(const int width, const int height, const int pad,
 
 /**
  * Writes image in path.
+ *
  * @param path Path where image should be written.
  */
 void Img::Write(const std::string & path) {
 
-    std::ofstream file;
-    file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-    try {
-        // opens file for output operations
-        file.open(path, std::ios::trunc);
-        file.close();
-
-        img_.write(path);
-
-    } catch (const std::ofstream::failure & e) {
-        std::cerr << "Exception ofstream failure caught\n";
+    std::ofstream file(path, std::ios::trunc); // creates or truncates file
+    if (file.is_open()) {
+        file.close(); // closes file
+        img_.write(path); // writes img in file
+    } else {
+        std::cerr << "Error: could not open " << path << '\n';
     }
     
 }

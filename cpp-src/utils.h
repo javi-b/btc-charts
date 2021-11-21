@@ -1,7 +1,9 @@
 #pragma once
 
 #include <array>
+#include <vector>
 #include <math.h>
+#include <numeric>
 
 
 /**
@@ -9,6 +11,11 @@
  * project.
  */
 namespace utils {
+
+/// Date data structure.
+struct Date {
+    int y = 0, m = 0, d = 0;
+};
 
 /// Numeric scales enumeration.
 enum Scale {kLinear, kLogarithmic};
@@ -18,7 +25,25 @@ typedef std::array<int, 3> RGB; ///< RGB color mode type.
 typedef std::array<int, 4> RGBA; ///< RGBA color mode type.
 
 /**
+ * Gets average of numbers in vector.
+ *
+ * @tparam T Type of numbers in vector and returned average.
+ * @param v Vector of numbers to get average from.
+ * @return Average of numbers in vector.
+ */
+template <typename T>
+T GetAverage(std::vector<T> const & v) {
+
+    if (v.empty())
+        return 0;
+
+    auto const count = static_cast<T>(v.size());
+    return std::accumulate(v.begin(), v.end(), 0) / count;
+}
+
+/**
  * Applies scale to value and returns it.
+ *
  * @param scale Scale (linear or logarithmic).
  * @param value Value.
  * @return Result of applying scale to value.
@@ -42,6 +67,7 @@ inline float ApplyScale(const Scale scale, const float value) {
 
 /**
  * Converts HSL color to RGB.
+ *
  * @param h Hue (0-360).
  * @param s Saturation (0-1).
  * @param l Light (0-1).

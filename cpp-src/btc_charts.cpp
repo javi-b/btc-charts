@@ -5,6 +5,7 @@
 #include <iostream>
 #include "utils.h"
 #include "img.h"
+#include "btc_data.h"
 
 // image constants
 #define IMG_PATH "chart.png" ///< Output image path.
@@ -15,6 +16,8 @@
  * Main function.
  */
 int main() {
+
+    BtcData btc_data;
 
     Img img = Img(WIDTH, HEIGHT, 18, "#ffffff");
     img.Write(IMG_PATH);
