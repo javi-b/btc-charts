@@ -56,6 +56,3 @@ dkms.conf
 
 # Binary
 btc_charts
-
-# Chart images
-charts/*
