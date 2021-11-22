@@ -8,15 +8,27 @@
  * Creates the image and sets its background.
  *
  * @param width,height Image width ang height sizes.
- * @param pad Padding for image.
  * @param bg_color Background color for image.
  */
-Img::Img(const int width, const int height, const int pad,
-            const std::string & bg_color)
-        : width_(width), height_(height), pad_(pad) {
+Img::Img(const int width, const int height, const std::string & bg_color) {
 
-    img_ = Magick::Image(Magick::Geometry(width_, height_),
+    img_ = Magick::Image(Magick::Geometry(width, height),
             Magick::Color(bg_color));
+}
+
+/**
+ * Draws line on image.
+ *
+ * @param start_x,start_y Line start coordinates.
+ * @param end_x,end_y Line end coordinates.
+ * @param color Line color.
+ */
+void Img::DrawLine(const float start_x, const float start_y,
+        const float end_x, const float end_y, const std::string & color) {
+
+    img_.strokeColor(Magick::Color(color));
+    img_.draw(Magick::DrawableLine(start_x, start_y, end_x, end_y));
+
 }
 
 /**

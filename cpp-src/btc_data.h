@@ -8,12 +8,7 @@
  * Bitcoin data class.
  */
 class BtcData {
-
 public:
-    // constructor and destructor
-    BtcData();
-
-private:
     /// Bitcoin data from one day data structure.
     struct DayBtcData {
         int days_since_gen = 0;
@@ -21,14 +16,24 @@ private:
         float price = 0.0f;
     };
 
+    // constructor
+    BtcData();
+
+    // public functions
+    float GetPrice(const int day_since_gen);
+    float GetMaxPrice(const int day_a, const int day_b);
+    int GetLastDay();
+
+private:
     static const std::string kDataFilePath_;
-    static const int kInitialDaysSinceGen;
+    static const int kInitialDaysSinceGen_;
 
     /// Vector of all days Bitcoin data.
     std::vector<DayBtcData> btc_data_;
 
     // helper functions
     DayBtcData ExtractDayBtcData(const std::string & line);
-    utils::Date ExtractDate(const std::string & date_str);
-    float ExtractAveragePrice(const std::string & prices_str);
+    static utils::Date ExtractDate(const std::string & date_str);
+    static float ExtractAveragePrice(const std::string & prices_str);
+    float FindMaxPrice();
 };
