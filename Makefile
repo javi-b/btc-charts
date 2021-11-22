@@ -1,3 +1,24 @@
+CXXFLAGS = -Wall -O2
+MAGICKFLAGS = `Magick++-config --cxxflags --cppflags --ldflags --libs`
 
-btc-charts : src/btc-charts.c src/util/util.c src/util/util.h src/btcdata/btcdata.c src/btcdata/btcdata.h src/btc/btc.c src/btc/btc.h src/img/img.c src/img/img.h src/imgproc/imgproc.c src/imgproc/imgproc.h
-	gcc -Wall -lm -lpng `pkg-config --cflags --libs MagickWand` src/btc-charts.c src/util/util.c src/btc/btc.c src/btcdata/btcdata.c src/img/img.c src/imgproc/imgproc.c -o btc-charts
+SRC = $(wildcard *.cpp)
+OBJ = $(SRC:.cpp=.o)
+
+btc_charts: $(OBJ)
+	$(CXX) $(CXXFLAGS) $(MAGICKFLAGS) $(OBJ) -o $@
+
+main.o: main.cpp utils.h
+	$(CXX) $(CXXFLAGS) $(MAGICKFLAGS) -c $< -o $@
+
+btc_chart.o: btc_chart.cpp btc_chart.h utils.h
+	$(CXX) $(CXXFLAGS) $(MAGICKFLAGS) -c $< -o $@
+
+img.o: img.cpp img.h utils.h
+	$(CXX) $(CXXFLAGS) $(MAGICKFLAGS) -c $< -o $@
+
+btc_data.o: btc_data.cpp btc_data.h utils.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+.PHONY: clean
+clean:
+	rm -vf $(OBJ) btc-charts
