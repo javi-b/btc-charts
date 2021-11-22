@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['utils_34',['utils',['../namespaceutils.html',1,'']]],
-  ['utils_2eh_35',['utils.h',['../utils_8h.html',1,'']]]
+  ['scale_41',['Scale',['../namespaceutils.html#a5be5dd47904cd91c55f0a37be941d7be',1,'utils']]]
 ];

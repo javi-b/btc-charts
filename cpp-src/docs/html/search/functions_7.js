@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['write_60',['Write',['../class_img.html#a72026d04d3d54efa4fecb1793dcabfa0',1,'Img']]]
+  ['img_76',['Img',['../class_img.html#ac8115ef6aff22605d8bf435b6a52ab0e',1,'Img']]]
 ];

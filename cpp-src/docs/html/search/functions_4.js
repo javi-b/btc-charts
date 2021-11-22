@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['hsltorgb_57',['HslToRgb',['../namespaceutils.html#ad158e292316bed6258d9c4822f8dafc4',1,'utils']]]
+  ['findmaxprice_69',['FindMaxPrice',['../class_btc_data.html#ae4e2af028158c9493aec63cccf9dee2d',1,'BtcData']]]
 ];

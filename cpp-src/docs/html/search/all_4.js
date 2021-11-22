@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['getaverage_14',['GetAverage',['../namespaceutils.html#a488957d88ccc6c72323ddb932d6851d6',1,'utils']]]
+  ['findmaxprice_18',['FindMaxPrice',['../class_btc_data.html#ae4e2af028158c9493aec63cccf9dee2d',1,'BtcData']]]
 ];

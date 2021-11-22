@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['main_59',['main',['../btc__charts_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'btc_charts.cpp']]]
+  ['hsltorgb_75',['HslToRgb',['../namespaceutils.html#ad158e292316bed6258d9c4822f8dafc4',1,'utils']]]
 ];

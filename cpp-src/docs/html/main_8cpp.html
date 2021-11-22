@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>btc-charts: btc_charts.cpp File Reference</title>
+<title>btc-charts: main.cpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -65,7 +65,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
-$(document).ready(function(){initNavTree('btc__charts_8cpp.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('main_8cpp.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -85,85 +85,25 @@ $(document).ready(function(){initNavTree('btc__charts_8cpp.html',''); initResiza
 
 <div class="header">
   <div class="summary">
-<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">btc_charts.cpp File Reference</div>  </div>
+<div class="title">main.cpp File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;iostream&gt;</code><br />
-<code>#include &quot;<a class="el" href="utils_8h.html">utils.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="img_8h.html">img.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="btc__data_8h.html">btc_data.h</a>&quot;</code><br />
+
+<p>Main file containing project's main function.  
+<a href="#details">More...</a></p>
+<div class="textblock"><code>#include &quot;<a class="el" href="btc__chart_8h.html">btc_chart.h</a>&quot;</code><br />
 </div><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
-Macros</h2></td></tr>
-<tr class="memitem:ac6acca5b567b29950c4197ebacadf6dc"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="btc__charts_8cpp.html#ac6acca5b567b29950c4197ebacadf6dc">IMG_PATH</a>&#160;&#160;&#160;&quot;chart.png&quot;</td></tr>
-<tr class="memdesc:ac6acca5b567b29950c4197ebacadf6dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output image path.  <a href="btc__charts_8cpp.html#ac6acca5b567b29950c4197ebacadf6dc">More...</a><br /></td></tr>
-<tr class="separator:ac6acca5b567b29950c4197ebacadf6dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a241aeeb764887ae5e3de58b98f04b16d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="btc__charts_8cpp.html#a241aeeb764887ae5e3de58b98f04b16d">WIDTH</a>&#160;&#160;&#160;1024</td></tr>
-<tr class="memdesc:a241aeeb764887ae5e3de58b98f04b16d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output image width.  <a href="btc__charts_8cpp.html#a241aeeb764887ae5e3de58b98f04b16d">More...</a><br /></td></tr>
-<tr class="separator:a241aeeb764887ae5e3de58b98f04b16d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed89bd71aee8be823e8a20ec4e093c1e"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="btc__charts_8cpp.html#aed89bd71aee8be823e8a20ec4e093c1e">HEIGHT</a>&#160;&#160;&#160;576</td></tr>
-<tr class="memdesc:aed89bd71aee8be823e8a20ec4e093c1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output image height.  <a href="btc__charts_8cpp.html#aed89bd71aee8be823e8a20ec4e093c1e">More...</a><br /></td></tr>
-<tr class="separator:aed89bd71aee8be823e8a20ec4e093c1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ae66f6b31b5ad750f1fe042a706a4e3d4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="btc__charts_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a> ()</td></tr>
-<tr class="memdesc:ae66f6b31b5ad750f1fe042a706a4e3d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main function.  <a href="btc__charts_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">More...</a><br /></td></tr>
+<tr class="memitem:ae66f6b31b5ad750f1fe042a706a4e3d4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a> ()</td></tr>
+<tr class="memdesc:ae66f6b31b5ad750f1fe042a706a4e3d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main function.  <a href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">More...</a><br /></td></tr>
 <tr class="separator:ae66f6b31b5ad750f1fe042a706a4e3d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Macro Definition Documentation</h2>
-<a id="aed89bd71aee8be823e8a20ec4e093c1e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aed89bd71aee8be823e8a20ec4e093c1e">&#9670;&nbsp;</a></span>HEIGHT</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define HEIGHT&#160;&#160;&#160;576</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Output image height. </p>
-
-</div>
-</div>
-<a id="ac6acca5b567b29950c4197ebacadf6dc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac6acca5b567b29950c4197ebacadf6dc">&#9670;&nbsp;</a></span>IMG_PATH</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define IMG_PATH&#160;&#160;&#160;&quot;chart.png&quot;</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Output image path. </p>
-
-</div>
-</div>
-<a id="a241aeeb764887ae5e3de58b98f04b16d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a241aeeb764887ae5e3de58b98f04b16d">&#9670;&nbsp;</a></span>WIDTH</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define WIDTH&#160;&#160;&#160;1024</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Output image width. </p>
-
-</div>
-</div>
-<h2 class="groupheader">Function Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Main file containing project's main function. </p>
+</div><h2 class="groupheader">Function Documentation</h2>
 <a id="ae66f6b31b5ad750f1fe042a706a4e3d4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae66f6b31b5ad750f1fe042a706a4e3d4">&#9670;&nbsp;</a></span>main()</h2>
 
@@ -188,7 +128,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="btc__charts_8cpp.html">btc_charts.cpp</a></li>
+    <li class="navelem"><a class="el" href="main_8cpp.html">main.cpp</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
