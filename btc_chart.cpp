@@ -27,17 +27,22 @@ void BtcChart::Generate(const std::string & path, const int width,
  */
 void BtcChart::DrawPrice(Img & img, const int day_a, const int day_b) {
 
+    // price represented at the topmost point of the chart
+    const float top_price = btc_data_.GetMaxPrice(day_a, day_b);
+
+    float prev_y = 0.0f;
+
     for (int x = 1; x < width_; x++) {
 
         const int start_day = XToDay(day_a, day_b, x - 1);
-        const int start_y = PriceToY(0, btc_data_.GetMaxPrice(day_a, day_b),
-                btc_data_.GetPrice(start_day));
-
         const int end_day = XToDay(day_a, day_b, x);
-        const int end_y = PriceToY(0, btc_data_.GetMaxPrice(day_a, day_b),
-                btc_data_.GetPrice(end_day));
 
-        img.DrawLine(x - 1, start_y, x, end_y, "#000000");
+        const float y = PriceToY(0, top_price,
+                btc_data_.GetAvgPrice(start_day, end_day));
+
+        img.DrawLine(float(x - 1), prev_y, float(x), y, "#000000");
+
+        prev_y = y;
     }
 }
 
@@ -61,8 +66,8 @@ int BtcChart::XToDay(const int day_a, const int day_b, const int x) {
  * @param price Price to convert.
  * @return Y position.
  */
-int BtcChart::PriceToY(const float min_price, const float max_price,
+float BtcChart::PriceToY(const float min_price, const float max_price,
             const float price) {
 
-    return int(height_ - (price - min_price) * height_ / max_price);
+    return height_ - (price - min_price) * height_ / max_price;
 }

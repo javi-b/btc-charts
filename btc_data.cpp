@@ -55,6 +55,27 @@ float BtcData::GetPrice(const int days_since_gen) {
 }
 
 /**
+ * Get average price between two days.
+ *
+ * @param day_a First day, counted as number of days since genesis block.
+ * @param day_b Second day, counted as number of days since genesis block.
+ * @return Average price.
+ */
+float BtcData::GetAvgPrice(const int day_a, const int day_b) {
+
+    float avg_price = 0.0f;
+
+    for (int day = day_a; day < day_b; day++) {
+        const int i = day - kInitialDaysSinceGen_;
+        if (i < 0 || i >= int(btc_data_.size()))
+            continue;
+        avg_price += btc_data_[i].price;
+    }
+
+    return (avg_price / (day_b - day_a));
+}
+
+/**
  * Gets maximum price between two days.
  *
  * @param day_a First day, counted as number of days since genesis block.

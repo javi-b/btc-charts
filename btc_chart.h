@@ -24,6 +24,6 @@ private:
 
     // utility private functions
     int XToDay(const int day_a, const int day_b, const int x);
-    int PriceToY(const float min_price, const float max_price,
+    float PriceToY(const float min_price, const float max_price,
             const float price);
 };

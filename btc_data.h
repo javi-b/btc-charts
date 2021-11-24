@@ -21,6 +21,7 @@ public:
 
     // public functions
     float GetPrice(const int day_since_gen);
+    float GetAvgPrice(const int day_a, const int day_b);
     float GetMaxPrice(const int day_a, const int day_b);
     int GetLastDay();
 
