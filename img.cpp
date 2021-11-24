@@ -8,12 +8,11 @@
  * Creates the image and sets its background.
  *
  * @param width,height Image width ang height sizes.
- * @param bg_color Background color for image.
  */
-Img::Img(const int width, const int height, const std::string & bg_color) {
+Img::Img(const int width, const int height) {
 
     img_ = Magick::Image(Magick::Geometry(width, height),
-            Magick::Color(bg_color));
+            Magick::Color(0, 0, 0, 0));
 }
 
 /**

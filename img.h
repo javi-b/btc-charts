@@ -10,7 +10,7 @@
 class Img {
 public:
     // constructor
-    Img(const int width, const int height, const std::string & bg_color);
+    Img(const int width, const int height);
 
     // public functions
 

@@ -13,7 +13,7 @@ void BtcChart::Generate(const std::string & path, const int width,
     width_ = width;
     height_ = height;
 
-    Img img(width_, height_, "#ffffff");
+    Img img(width_, height_);
     DrawPrice(img, 0, btc_data_.GetLastDay());
 
     img.Write(path);
@@ -30,7 +30,7 @@ void BtcChart::DrawPrice(Img & img, const int day_a, const int day_b) {
     // price represented at the topmost point of the chart
     const float top_price = btc_data_.GetMaxPrice(day_a, day_b);
 
-    float prev_y = 0.0f;
+    float prev_y;
 
     for (int x = 1; x < width_; x++) {
 
@@ -40,7 +40,8 @@ void BtcChart::DrawPrice(Img & img, const int day_a, const int day_b) {
         const float y = PriceToY(0, top_price,
                 btc_data_.GetAvgPrice(start_day, end_day));
 
-        img.DrawLine(float(x - 1), prev_y, float(x), y, "#000000");
+        img.DrawLine(float(x - 1), (x == 1) ? y : prev_y,
+                float(x), y, "#000000");
 
         prev_y = y;
     }
