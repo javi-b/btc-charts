@@ -10,7 +10,11 @@
  */
 int main() {
 
+    BtcChart::Cfg cfg = BtcChart::Cfg(1024, 576, 0, 5000,
+            0.1f * 0.9f, 10000000.0f * 1.1f, utils::kLogarithmic);
+
     BtcChart btc_chart;
-    btc_chart.Generate("charts/chart.png", 800, 600, utils::kLogarithmic);
+    btc_chart.Generate("charts/chart.png", cfg);
+
     return 0;
 }

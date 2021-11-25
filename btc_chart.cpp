@@ -2,20 +2,27 @@
 #include "btc_chart.h"
 
 /**
+ * Bitcoin chart config data structure constructor.
+ */
+BtcChart::Cfg::Cfg(const int width, const int height,
+        const int day_a, const int day_b,
+        const float bottom_price, const float top_price,
+        const utils::Scale scale)
+    : width(width), height(height), day_a(day_a), day_b(day_b),
+        bottom_price(bottom_price), top_price(top_price), scale(scale) {}
+
+/**
  * Generates a Bitcoin chart image.
  *
  * @param path Path where to save chart image.
- * @param width,height Chart image size.
- * @param scale Scale of y values in chart.
+ * @param cfg Bitcoin chart config data structure.
  */
-void BtcChart::Generate(const std::string & path, const int width,
-        const int height, const utils::Scale scale) {
+void BtcChart::Generate(const std::string & path, Cfg & cfg) {
 
-    width_ = width;
-    height_ = height;
+    cfg_ = &cfg;
 
-    Img img(width_, height_);
-    DrawPrice(img, scale, 0, btc_data_.GetLastDay());
+    Img img(cfg_->width, cfg_->height);
+    DrawPrice(img);
 
     img.Write(path);
 }
@@ -24,27 +31,21 @@ void BtcChart::Generate(const std::string & path, const int width,
  * Draws Bitcoin price on chart image.
  *
  * @param img Image object.
- * @param scale Scale of y values in chart.
- * @param day_a,day_b First and last days to draw the Bitcoin price of.
  */
-void BtcChart::DrawPrice(Img & img, const utils::Scale scale,
-        const int day_a, const int day_b) {
+void BtcChart::DrawPrice(Img & img) {
 
-    // price represented at the topmost point of the chart
-    const float top_price = btc_data_.GetMaxPrice(day_a, day_b);
+    float prev_y = -1.0f;
 
-    float prev_y;
+    for (int x = 0; x < cfg_->width; x++) {
 
-    for (int x = 1; x < width_; x++) {
+        const int start_day = XToDay(x - 1);
+        const int end_day = XToDay(x);
 
-        const int start_day = XToDay(day_a, day_b, x - 1);
-        const int end_day = XToDay(day_a, day_b, x);
+        const float price = btc_data_.GetAvgPrice(start_day, end_day);
+        const float y = (price == -1.0f) ? price : PriceToY(price);
 
-        const float y = PriceToY(scale, 0, top_price,
-                btc_data_.GetAvgPrice(start_day, end_day));
-
-        img.DrawLine(float(x - 1), (x == 1) ? y : prev_y,
-                float(x), y, "#000000");
+        if (prev_y != -1.0f && y != -1.0f)
+            img.DrawLine(float(x - 1), prev_y, float(x), y, "#000000");
 
         prev_y = y;
     }
@@ -53,28 +54,28 @@ void BtcChart::DrawPrice(Img & img, const utils::Scale scale,
 /**
  * Gets day according to x position in chart image.
  *
- * @param day_a,day_b First and last days to draw on the chart image.
  * @param x X position.
  * @return Day according to x position.
  */
-int BtcChart::XToDay(const int day_a, const int day_b, const int x) {
+int BtcChart::XToDay(const int x) {
 
-    return (day_a + x * (day_b - day_a) / width_);
+    return (cfg_->day_a + x * (cfg_->day_b - cfg_->day_a) / cfg_->width);
 }
 
 /**
  * Gets y position in chart image according to price.
  *
- * @param scale Scale of y values in chart.
- * @param min_price,max_price Minimum and maximum prices to show on the
- * chart image.
  * @param price Price to convert.
  * @return Y position.
  */
-float BtcChart::PriceToY(const utils::Scale scale, const float min_price,
-        const float max_price, const float price) {
+float BtcChart::PriceToY(const float price) {
 
-    return (height_ - (utils::ApplyScale(scale, price)
-                - utils::ApplyScale(scale, min_price))
-            * height_ / utils::ApplyScale(scale, max_price));
+    const float scaled_price = utils::ApplyScale(cfg_->scale, price);
+    const float scaled_bottom_price = utils::ApplyScale(cfg_->scale,
+            cfg_->bottom_price);
+    const float scaled_top_price = utils::ApplyScale(cfg_->scale,
+            cfg_->top_price);
+
+    return (cfg_->height - (scaled_price - scaled_bottom_price)
+            * cfg_->height / scaled_top_price);
 }
