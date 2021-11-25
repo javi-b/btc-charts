@@ -40,39 +40,46 @@ BtcData::BtcData() {
 }
 
 /**
- * Gets Bitcoin price on a specific day.
+ * Gets Bitcoin price on a specific day or -1 if there is no data to get
+ * the price from
  *
  * @param days_since_gen Days since genesis block to day which price has
  * to be returned.
- * @return Price.
+ * @return Price or -1.
  */
 float BtcData::GetPrice(const int days_since_gen) {
 
     return ((days_since_gen - kInitialDaysSinceGen_ >= int(btc_data_.size())
                 || days_since_gen < kInitialDaysSinceGen_)
-            ? 0.0f
+            ? -1.0f
             : btc_data_[days_since_gen - kInitialDaysSinceGen_].price);
 }
 
 /**
- * Get average price between two days.
+ * Get average price between two days or -1 if there is no data to get the
+ * price from.
  *
  * @param day_a First day, counted as number of days since genesis block.
  * @param day_b Second day, counted as number of days since genesis block.
- * @return Average price.
+ * @return Average price or -1.
  */
 float BtcData::GetAvgPrice(const int day_a, const int day_b) {
 
+    int num_days = 0;
     float avg_price = 0.0f;
 
     for (int day = day_a; day < day_b; day++) {
+
         const int i = day - kInitialDaysSinceGen_;
-        if (i < 0 || i >= int(btc_data_.size()))
+
+        if (i < 0 || i >= int(btc_data_.size()) || btc_data_[i].price < 0)
             continue;
+
+        num_days++;
         avg_price += btc_data_[i].price;
     }
 
-    return (avg_price / (day_b - day_a));
+    return ((num_days == 0) ? -1.0f : avg_price / num_days);
 }
 
 /**
@@ -88,7 +95,7 @@ float BtcData::GetMaxPrice(const int day_a, const int day_b) {
 
     for (int day = day_a; day < day_b; day++) {
         const int i = day - kInitialDaysSinceGen_;
-        if (i < 0 || i >= int(btc_data_.size()))
+        if (i < 0 || i >= int(btc_data_.size()) || btc_data_[i].price < 0)
             continue;
         if (btc_data_[i].price > max_price)
             max_price = btc_data_[i].price;
@@ -177,10 +184,10 @@ utils::Date BtcData::ExtractDate(const std::string & date_str) {
 
 /**
  * Extracts average price from string containing multiple prices separated
- * by commas.
+ * by commas or -1 if there is no data to get the price from.
  *
  * @param prices_str String containg multiple prices separated by commas.
- * @return Average price.
+ * @return Average price or -1.
  */
 float BtcData::ExtractAveragePrice(const std::string & prices_str) {
 
@@ -203,5 +210,5 @@ float BtcData::ExtractAveragePrice(const std::string & prices_str) {
             prices.push_back(number);
     }
 
-    return utils::GetAverage(prices);
+    return ((prices.empty()) ? -1.0f : utils::GetAverage(prices));
 }
