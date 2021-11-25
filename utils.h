@@ -36,9 +36,11 @@ T GetAverage(std::vector<T> const & v) {
 
     if (v.empty())
         return 0;
+    else if (v.size() == 1)
+        return v[0];
 
     auto const count = static_cast<T>(v.size());
-    return std::accumulate(v.begin(), v.end(), 0) / count;
+    return std::accumulate(v.begin(), v.end(), T(0)) / count;
 }
 
 /**
